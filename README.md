@@ -16,6 +16,7 @@ Add this alias to your `~/.zshrc` or `~/.bashrc` to make it permanent.
 
 - macOS with ARM (Apple Silicon)
 - Node.js >= 18.0.0
+- unzip command // brew install unzip
 
 ## Quick Start
 
