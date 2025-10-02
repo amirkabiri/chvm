@@ -1,0 +1,10 @@
+tests/
+coverage/
+.github/
+*.log
+.DS_Store
+.env
+jest.config.js
+prd.md
+
+

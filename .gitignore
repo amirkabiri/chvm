@@ -1,0 +1,13 @@
+node_modules/
+coverage/
+.DS_Store
+*.log
+.env
+.vscode/
+.idea/
+
+# Test artifacts
+tests/fixtures/.chvm-test/
+tests/e2e/.chvm-test-*/
+
+

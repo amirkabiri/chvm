@@ -1,0 +1,48 @@
+{
+  "name": "chvm",
+  "version": "1.0.4",
+  "description": "Chrome Version Manager - Manage and run multiple Chromium versions on macOS ARM",
+  "type": "module",
+  "main": "./src/cli.js",
+  "bin": {
+    "chvm": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --testMatch='**/tests/e2e/**/*.test.js'",
+    "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest --testMatch='**/tests/unit/**/*.test.js'",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
+  },
+  "keywords": [
+    "chrome",
+    "chromium",
+    "version-manager",
+    "macos",
+    "arm",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "package.json"
+  ],
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "ora": "^7.0.1",
+    "cli-progress": "^3.12.0",
+    "proper-lockfile": "^4.1.2"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0"
+  }
+}
+
+
