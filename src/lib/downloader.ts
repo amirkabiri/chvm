@@ -2,15 +2,48 @@
  * Downloader module - Streaming download with progress
  */
 
-import fs from 'fs';
-import { pipeline } from 'stream/promises';
 import { createWriteStream, existsSync, statSync } from 'fs';
 
-export function getDownloadUrl(revision) {
+export interface RevisionMetadata {
+  items: Array<{
+    kind: string;
+    mediaLink: string;
+    metadata?: Record<string, unknown>;
+    name: string;
+    size: string;
+    updated: string;
+  }>;
+  kind: string;
+  prefixes?: string[];
+  nextPageToken?: string;
+}
+
+export interface DownloadProgress {
+  downloaded: number;
+  total: number;
+  percentage: number;
+}
+
+export interface RetryOptions {
+  retries?: number;
+  delay?: number;
+  backoff?: number;
+}
+
+export interface ValidationOptions {
+  expectedSize?: number;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  size: number;
+}
+
+export function getDownloadUrl(revision: string): string {
   return `https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Mac_Arm%2F${revision}%2Fchrome-mac.zip?alt=media`;
 }
 
-export async function fetchRevisionMetadata(revision) {
+export async function fetchRevisionMetadata(revision: string): Promise<RevisionMetadata> {
   const url = `https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o?delimiter=/&prefix=Mac_Arm/${revision}/&fields=items(kind,mediaLink,metadata,name,size,updated),kind,prefixes,nextPageToken`;
   
   const response = await fetch(url);
@@ -28,7 +61,11 @@ export async function fetchRevisionMetadata(revision) {
   return data;
 }
 
-export async function downloadWithProgress(url, outputPath, onProgress) {
+export async function downloadWithProgress(
+  url: string,
+  outputPath: string,
+  onProgress?: (progress: DownloadProgress) => void
+): Promise<void> {
   const response = await fetch(url);
   
   if (!response.ok) {
@@ -56,7 +93,7 @@ export async function downloadWithProgress(url, outputPath, onProgress) {
       downloadedSize += value.length;
       
       if (onProgress && totalSize > 0) {
-        const progress = {
+        const progress: DownloadProgress = {
           downloaded: downloadedSize,
           total: totalSize,
           percentage: Math.round((downloadedSize / totalSize) * 100)
@@ -68,8 +105,8 @@ export async function downloadWithProgress(url, outputPath, onProgress) {
     fileStream.end();
     
     // Wait for file stream to finish
-    await new Promise((resolve, reject) => {
-      fileStream.on('finish', resolve);
+    await new Promise<void>((resolve, reject) => {
+      fileStream.on('finish', () => resolve());
       fileStream.on('error', reject);
     });
     
@@ -79,16 +116,19 @@ export async function downloadWithProgress(url, outputPath, onProgress) {
   }
 }
 
-export async function retryFetch(fetchFn, options = {}) {
+export async function retryFetch<T>(
+  fetchFn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
   const { retries = 3, delay = 1000, backoff = 2 } = options;
   
-  let lastError;
+  let lastError: Error | undefined;
   
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       return await fetchFn();
     } catch (error) {
-      lastError = error;
+      lastError = error as Error;
       
       if (attempt < retries) {
         const waitTime = delay * Math.pow(backoff, attempt);
@@ -100,7 +140,7 @@ export async function retryFetch(fetchFn, options = {}) {
   throw lastError;
 }
 
-export async function streamDownload(url) {
+export async function streamDownload(url: string): Promise<ReadableStream<Uint8Array> | null> {
   const response = await fetch(url);
   
   if (!response.ok) {
@@ -110,7 +150,10 @@ export async function streamDownload(url) {
   return response.body;
 }
 
-export async function validateDownload(filePath, options = {}) {
+export async function validateDownload(
+  filePath: string,
+  options: ValidationOptions = {}
+): Promise<ValidationResult> {
   const { expectedSize } = options;
   
   if (!existsSync(filePath)) {
@@ -128,5 +171,4 @@ export async function validateDownload(filePath, options = {}) {
     size: stats.size
   };
 }
-
 

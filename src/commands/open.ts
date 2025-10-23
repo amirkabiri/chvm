@@ -8,13 +8,18 @@ import { promisify } from 'util';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
 import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions } from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
 
 const execAsync = promisify(exec);
 
-export async function openCommand(version, options) {
+export interface OpenCommandOptions {
+  disableCors?: boolean;
+}
+
+export async function openCommand(version: string, options: OpenCommandOptions): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
@@ -23,7 +28,7 @@ export async function openCommand(version, options) {
     const installed = await readInstalledVersions(chvmHome);
     const available = await readAvailableVersions(chvmHome);
 
-    let versionToOpen = null;
+    let versionToOpen: { version: string; path: string } | null = null;
 
     // Try to find in installed (check both version and revision)
     if (installed[version]) {
@@ -71,7 +76,7 @@ export async function openCommand(version, options) {
       throw new Error(`Chromium executable not found at ${execPath}`);
     }
 
-    const args = [
+    const args: string[] = [
       `--user-data-dir=${profileDir}`
     ];
 
@@ -93,12 +98,12 @@ export async function openCommand(version, options) {
     });
 
   } catch (error) {
-    console.error(chalk.red(`Error: ${error.message}`));
+    console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
   }
 }
 
-export function registerOpenCommand(program) {
+export function registerOpenCommand(program: Command): void {
   program
     .command('open <version>')
     .description('Open a specific Chromium version')

@@ -7,12 +7,17 @@ import ora from 'ora';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
 import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions, removeInstalledVersion } from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
 import { withLock } from '../lib/lock.js';
 
-export async function uninstallCommand(version, options) {
+export interface UninstallCommandOptions {
+  force?: boolean;
+}
+
+export async function uninstallCommand(version: string, options: UninstallCommandOptions): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
@@ -27,7 +32,7 @@ export async function uninstallCommand(version, options) {
 
       if (!installed[version]) {
         const resolved = resolveVersion(version, available);
-        if (resolved && installed[resolved.version]) {
+        if (resolved && resolved.version && installed[resolved.version]) {
           versionToUninstall = resolved.version;
         } else {
           throw new Error(`Version "${version}" is not installed.`);
@@ -63,12 +68,12 @@ export async function uninstallCommand(version, options) {
     });
 
   } catch (error) {
-    console.error(chalk.red(`Error: ${error.message}`));
+    console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
   }
 }
 
-export function registerUninstallCommand(program) {
+export function registerUninstallCommand(program: Command): void {
   program
     .command('uninstall <version>')
     .description('Uninstall a specific Chromium version')

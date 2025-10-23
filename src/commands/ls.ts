@@ -3,10 +3,15 @@
  */
 
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
 import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions } from '../lib/storage.js';
 
-export async function lsCommand(options) {
+export interface LsCommandOptions {
+  json?: boolean;
+}
+
+export async function lsCommand(options: LsCommandOptions): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
@@ -27,7 +32,7 @@ export async function lsCommand(options) {
       console.log(chalk.gray('VERSION\tREVISION\tCHANNEL\tSTATUS'));
       console.log(chalk.gray('─'.repeat(60)));
 
-      const printedMajors = new Set();
+      const printedMajors = new Set<string>();
       for (const item of available) {
         if (!item.version) {
           continue;
@@ -48,12 +53,12 @@ export async function lsCommand(options) {
       console.log();
     }
   } catch (error) {
-    console.error(chalk.red(`Error: ${error.message}`));
+    console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
   }
 }
 
-export function registerLsCommand(program) {
+export function registerLsCommand(program: Command): void {
   program
     .command('ls')
     .description('List available and installed Chromium versions')

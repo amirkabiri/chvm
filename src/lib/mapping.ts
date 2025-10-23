@@ -1,16 +1,48 @@
 /**
  * Mapping module - Revision to Version mapping
  */
-import fs from 'fs';
 
-export async function fetchRevisions(options = {}) {
+export interface Revision {
+  revision: string;
+  platform: string;
+}
+
+export interface VersionMapping {
+  version: string;
+  channel: string;
+  platform?: string;
+  chromium_main_branch_position?: number;
+}
+
+export interface AvailableVersion {
+  version: string | null;
+  revision: string;
+  channel: string | null;
+  platform: string;
+  hasVersion: boolean;
+}
+
+export interface FetchRevisionsOptions {
+  baseUrl?: string;
+  limit?: number | null;
+}
+
+export interface FetchVersionMappingOptions {
+  baseUrl?: string;
+  channel?: string;
+  platform?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function fetchRevisions(options: FetchRevisionsOptions = {}): Promise<Revision[]> {
   const {
     baseUrl = 'https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o',
     limit = null // null means fetch all
   } = options;
 
-  let allRevisions = [];
-  let pageToken = null;
+  let allRevisions: Revision[] = [];
+  let pageToken: string | null = null;
 
   do {
     const url = new URL(baseUrl);
@@ -31,14 +63,14 @@ export async function fetchRevisions(options = {}) {
     const data = await response.json();
 
     const revisions = (data.prefixes || [])
-      .map(prefix => {
+      .map((prefix: string) => {
         const match = prefix.match(/Mac_Arm\/(\d+)\//);
         return match ? { revision: match[1], platform: 'Mac_Arm' } : null;
       })
-      .filter(Boolean);
+      .filter((item: Revision | null): item is Revision => item !== null);
 
     allRevisions = allRevisions.concat(revisions);
-    pageToken = data.nextPageToken;
+    pageToken = data.nextPageToken || null;
 
     // If limit is set and we have enough, stop
     if (limit && allRevisions.length >= limit) {
@@ -51,7 +83,7 @@ export async function fetchRevisions(options = {}) {
   return allRevisions;
 }
 
-export async function fetchVersionMapping(options = {}) {
+export async function fetchVersionMapping(options: FetchVersionMappingOptions = {}): Promise<VersionMapping[]> {
   const {
     baseUrl = 'https://chromiumdash.appspot.com/fetch_releases',
     channel = 'Stable',
@@ -76,7 +108,7 @@ export async function fetchVersionMapping(options = {}) {
   return Array.isArray(data) ? data : [];
 }
 
-export async function fetchMilestones() {
+export async function fetchMilestones(): Promise<unknown[]> {
   const url = 'https://chromiumdash.appspot.com/fetch_milestones';
 
   const response = await fetch(url);
@@ -89,8 +121,11 @@ export async function fetchMilestones() {
   return Array.isArray(data) ? data : [];
 }
 
-export function mergeRevisionsWithVersions(revisions, versionMappings) {
-  const versionMap = new Map();
+export function mergeRevisionsWithVersions(
+  revisions: Revision[],
+  versionMappings: VersionMapping[]
+): AvailableVersion[] {
+  const versionMap = new Map<string, { version: string; channel: string; platform: string }>();
 
   // Build map from revision to version info
   for (const mapping of versionMappings) {
@@ -112,31 +147,32 @@ export function mergeRevisionsWithVersions(revisions, versionMappings) {
       revision: rev.revision,
       version: versionInfo?.version || null,
       channel: versionInfo?.channel || null,
-      platform: rev.platform
+      platform: rev.platform,
+      hasVersion: versionInfo !== undefined
     };
   }).filter(item => item.version !== null);
 }
 
-export async function buildAvailableVersions() {
+export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
   // FINAL STRATEGY: Get actual Mac_Arm revisions, then find versions for them
 
   // Step 1: Fetch Mac_Arm revisions from Google Storage
   // Limit to 2000 for performance (still covers several years of builds)
-  const revisions = await fetchRevisions({ limit: 9999992000 });
+  const revisions = await fetchRevisions({ limit: 2000 });
 
   // Step 2: Fetch version mappings from ALL channels with higher limits
   const [stableReleases, betaReleases, devReleases, canaryReleases] = await Promise.all([
-    fetchVersionMapping({ channel: 'Stable', limit: 999999500 }).catch(() => []),
-    fetchVersionMapping({ channel: 'Beta', limit: 999999500 }).catch(() => []),
-    fetchVersionMapping({ channel: 'Dev', limit: 999999500 }).catch(() => []),
-    fetchVersionMapping({ channel: 'Canary', limit: 999999500 }).catch(() => [])
+    fetchVersionMapping({ channel: 'Stable', limit: 500 }).catch(() => []),
+    fetchVersionMapping({ channel: 'Beta', limit: 500 }).catch(() => []),
+    fetchVersionMapping({ channel: 'Dev', limit: 500 }).catch(() => []),
+    fetchVersionMapping({ channel: 'Canary', limit: 500 }).catch(() => [])
   ]);
 
   const allReleases = [...stableReleases, ...betaReleases, ...devReleases, ...canaryReleases];
 
   // Step 3: Build a map of position -> version info (for lookup)
   // Mac_Arm revisions are in range 1000000-1011781
-  const positionMap = new Map();
+  const positionMap = new Map<string, { version: string; channel: string }>();
   for (const release of allReleases) {
     const position = release.chromium_main_branch_position;
     if (position) {
@@ -151,15 +187,8 @@ export async function buildAvailableVersions() {
   }
 
   // Step 4: Match Mac_Arm revisions with versions
-  // Build reverse map: revisionNum -> revisionStr
-  const revisionNums = new Map();
-  for (const rev of revisions) {
-    revisionNums.set(parseInt(rev.revision), rev.revision);
-  }
-
-  const available = [];
-  const versioned = [];
-  const unversioned = [];
+  const versioned: AvailableVersion[] = [];
+  const unversioned: AvailableVersion[] = [];
 
   for (const rev of revisions) {
     let versionInfo = positionMap.get(rev.revision);
@@ -192,7 +221,7 @@ export async function buildAvailableVersions() {
   }
 
   // Sort versioned by version (newest first)
-  versioned.sort((a, b) => compareVersions(b.version, a.version));
+  versioned.sort((a, b) => compareVersions(b.version!, a.version!));
 
   // Sort unversioned by revision (newest first)
   unversioned.sort((a, b) => parseInt(b.revision) - parseInt(a.revision));
@@ -201,7 +230,7 @@ export async function buildAvailableVersions() {
   return [...versioned, ...unversioned];
 }
 
-export function resolveVersion(query, available) {
+export function resolveVersion(query: string, available: AvailableVersion[]): AvailableVersion | null {
   if (!available || available.length === 0) {
     return null;
   }
@@ -236,7 +265,7 @@ export function resolveVersion(query, available) {
   return null;
 }
 
-export function compareVersions(v1, v2) {
+export function compareVersions(v1: string, v2: string): number {
   if (!v1) return -1;
   if (!v2) return 1;
 
@@ -255,5 +284,4 @@ export function compareVersions(v1, v2) {
 
   return 0;
 }
-
 

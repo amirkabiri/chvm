@@ -2,7 +2,13 @@
  * Platform check module - Verify macOS ARM - Stub for TDD
  */
 
-export function checkPlatform() {
+export interface PlatformInfo {
+  platform: string;
+  arch: string;
+  isSupported: boolean;
+}
+
+export function checkPlatform(): void {
   const info = getPlatformInfo();
   
   if (!info.isSupported) {
@@ -13,7 +19,7 @@ export function checkPlatform() {
   }
 }
 
-export function getPlatformInfo() {
+export function getPlatformInfo(): PlatformInfo {
   return {
     platform: process.platform,
     arch: process.arch,
@@ -21,8 +27,7 @@ export function getPlatformInfo() {
   };
 }
 
-export function isMacOSArm() {
+export function isMacOSArm(): boolean {
   return process.platform === 'darwin' && process.arch === 'arm64';
 }
-
 

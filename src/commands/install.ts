@@ -7,6 +7,7 @@ import ora from 'ora';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
 import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions, addInstalledVersion } from '../lib/storage.js';
 import { createLogger } from '../lib/logger.js';
@@ -15,7 +16,12 @@ import { fetchRevisionMetadata, downloadWithProgress } from '../lib/downloader.j
 import { atomicInstall, extractZip, verifyAppBundle, calculateDirectorySize } from '../lib/installer.js';
 import { withLock } from '../lib/lock.js';
 
-export async function installCommand(version, options) {
+export interface InstallCommandOptions {
+  cache?: boolean;
+  quiet?: boolean;
+}
+
+export async function installCommand(version: string, options: InstallCommandOptions): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
@@ -126,12 +132,12 @@ export async function installCommand(version, options) {
     }, { timeout: 600000 }); // 10 minute timeout
 
   } catch (error) {
-    console.error(chalk.red(`Error: ${error.message}`));
+    console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
   }
 }
 
-export function registerInstallCommand(program) {
+export function registerInstallCommand(program: Command): void {
   program
     .command('install <version>')
     .alias('i')
