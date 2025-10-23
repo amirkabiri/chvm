@@ -12,7 +12,7 @@ export interface AvailableVersion {
   revision: string;
   channel: string | null;
   platform: string;
-  hasVersion?: boolean;
+  hasVersion: boolean;
 }
 
 export interface InstalledVersion {

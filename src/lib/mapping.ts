@@ -60,7 +60,7 @@ export async function fetchRevisions(options: FetchRevisionsOptions = {}): Promi
       throw new Error(`Failed to fetch revisions: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { prefixes?: string[]; nextPageToken?: string };
 
     const revisions = (data.prefixes || [])
       .map((prefix: string) => {

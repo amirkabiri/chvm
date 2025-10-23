@@ -52,7 +52,7 @@ export async function fetchRevisionMetadata(revision: string): Promise<RevisionM
     throw new Error(`Failed to fetch metadata for revision ${revision}: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as RevisionMetadata;
   
   if (!data.items || data.items.length === 0) {
     throw new Error(`No files found for revision ${revision}`);
