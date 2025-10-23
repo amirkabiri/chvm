@@ -11,14 +11,16 @@ import {
   registerUpdateCommand,
   registerInstallCommand,
   registerOpenCommand,
-  registerUninstallCommand
+  registerUninstallCommand,
 } from './commands/index.js';
 
 const program = new Command();
 
 program
   .name('chvm')
-  .description('Chrome Version Manager - Manage multiple Chromium versions on macOS ARM')
+  .description(
+    'Chrome Version Manager - Manage multiple Chromium versions on macOS ARM'
+  )
   .version('1.0.0');
 
 // Help command (default)
@@ -43,4 +45,3 @@ if (process.argv.length === 2) {
 }
 
 program.parse();
-

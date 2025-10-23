@@ -14,26 +14,29 @@ function runCLI(args = '', env = {}) {
     return execSync(command, {
       encoding: 'utf8',
       stdio: 'pipe',
-      env: { ...process.env, ...env }
+      env: { ...process.env, ...env },
     });
   } catch (error) {
     return {
       stdout: error.stdout?.toString() || '',
       stderr: error.stderr?.toString() || '',
       status: error.status,
-      error: true
+      error: true,
     };
   }
 }
 
 describe('E2E: Platform Check', () => {
-  const isReallyMacOSArm = process.platform === 'darwin' && process.arch === 'arm64';
+  const isReallyMacOSArm =
+    process.platform === 'darwin' && process.arch === 'arm64';
 
   if (!isReallyMacOSArm) {
     it('should reject on non-macOS ARM platform', () => {
       const result = runCLI('ls');
       expect(result.error).toBe(true);
-      expect(result.stderr || result.stdout).toMatch(/macOS.*ARM|Apple Silicon/i);
+      expect(result.stderr || result.stdout).toMatch(
+        /macOS.*ARM|Apple Silicon/i
+      );
     });
   } else {
     it('should work on macOS ARM platform', () => {
@@ -47,16 +50,17 @@ describe('E2E: Platform Check', () => {
   it('should detect platform requirements in code', async () => {
     // We'll test the platform check module directly
     const { checkPlatform } = await import('../../src/lib/platform-check.js');
-    
+
     // This should either succeed (on macOS ARM) or throw
     const currentPlatform = { platform: process.platform, arch: process.arch };
-    
-    if (currentPlatform.platform === 'darwin' && currentPlatform.arch === 'arm64') {
+
+    if (
+      currentPlatform.platform === 'darwin' &&
+      currentPlatform.arch === 'arm64'
+    ) {
       expect(() => checkPlatform()).not.toThrow();
     } else {
       expect(() => checkPlatform()).toThrow(/macOS.*ARM|Apple Silicon/i);
     }
   });
 });
-
-

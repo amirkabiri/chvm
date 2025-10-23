@@ -7,4 +7,3 @@ describe('E2E: chvm open', () => {
     expect(true).toBe(true);
   });
 });
-

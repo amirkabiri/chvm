@@ -10,7 +10,12 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
-import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions } from '../lib/storage.js';
+import {
+  getChvmHome,
+  ensureChvmDir,
+  readAvailableVersions,
+  readInstalledVersions,
+} from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
 
 const execAsync = promisify(exec);
@@ -19,7 +24,10 @@ export interface OpenCommandOptions {
   disableCors?: boolean;
 }
 
-export async function openCommand(version: string, options: OpenCommandOptions): Promise<void> {
+export async function openCommand(
+  version: string,
+  options: OpenCommandOptions
+): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
@@ -37,14 +45,19 @@ export async function openCommand(version: string, options: OpenCommandOptions):
       // Try to resolve and install
       const resolved = resolveVersion(version, available);
       if (!resolved) {
-        throw new Error(`Version "${version}" not found. Run "chvm ls" to see available versions.`);
+        throw new Error(
+          `Version "${version}" not found. Run "chvm ls" to see available versions.`
+        );
       }
 
       const installKey = resolved.version || resolved.revision;
-      const displayVersion = resolved.version || `Revision ${resolved.revision}`;
+      const displayVersion =
+        resolved.version || `Revision ${resolved.revision}`;
 
       if (!installed[installKey]) {
-        console.log(chalk.blue(`${displayVersion} not installed. Installing...`));
+        console.log(
+          chalk.blue(`${displayVersion} not installed. Installing...`)
+        );
         // Use revision for install if no version
         await execAsync(`node ${process.argv[1]} install ${resolved.revision}`);
 
@@ -61,7 +74,11 @@ export async function openCommand(version: string, options: OpenCommandOptions):
     }
 
     if (options.disableCors) {
-      console.log(chalk.yellow('⚠️  WARNING: Running with --disable-web-security. This is insecure and should only be used for development.'));
+      console.log(
+        chalk.yellow(
+          '⚠️  WARNING: Running with --disable-web-security. This is insecure and should only be used for development.'
+        )
+      );
     }
 
     // Prepare profile directory
@@ -76,13 +93,13 @@ export async function openCommand(version: string, options: OpenCommandOptions):
       throw new Error(`Chromium executable not found at ${execPath}`);
     }
 
-    const args: string[] = [
-      `--user-data-dir=${profileDir}`
-    ];
+    const args: string[] = [`--user-data-dir=${profileDir}`];
 
     if (options.disableCors) {
       args.push('--disable-web-security');
-      args.push(`--user-data-dir=${join(chvmHome, 'tmp', versionToOpen.version)}`);
+      args.push(
+        `--user-data-dir=${join(chvmHome, 'tmp', versionToOpen.version)}`
+      );
     }
 
     console.log(chalk.green(`Opening Chromium ${versionToOpen.version}...`));
@@ -90,13 +107,12 @@ export async function openCommand(version: string, options: OpenCommandOptions):
     // Use open command on macOS
     const command = `open -a "${appPath}" --args ${args.join(' ')}`;
 
-    exec(command, (error) => {
+    exec(command, error => {
       if (error) {
         console.error(chalk.red(`Failed to open: ${error.message}`));
         process.exit(1);
       }
     });
-
   } catch (error) {
     console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
@@ -110,4 +126,3 @@ export function registerOpenCommand(program: Command): void {
     .option('--disable-cors', 'Disable CORS (useful for development)')
     .action(openCommand);
 }
-

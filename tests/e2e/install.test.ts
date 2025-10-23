@@ -7,4 +7,3 @@ describe('E2E: chvm install', () => {
     expect(true).toBe(true);
   });
 });
-

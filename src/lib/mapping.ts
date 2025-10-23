@@ -35,10 +35,12 @@ export interface FetchVersionMappingOptions {
   offset?: number;
 }
 
-export async function fetchRevisions(options: FetchRevisionsOptions = {}): Promise<Revision[]> {
+export async function fetchRevisions(
+  options: FetchRevisionsOptions = {}
+): Promise<Revision[]> {
   const {
     baseUrl = 'https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o',
-    limit = null // null means fetch all
+    limit = null, // null means fetch all
   } = options;
 
   let allRevisions: Revision[] = [];
@@ -48,7 +50,10 @@ export async function fetchRevisions(options: FetchRevisionsOptions = {}): Promi
     const url = new URL(baseUrl);
     url.searchParams.set('delimiter', '/');
     url.searchParams.set('prefix', 'Mac_Arm/');
-    url.searchParams.set('fields', 'items(kind,mediaLink,metadata,name,size,updated),kind,prefixes,nextPageToken');
+    url.searchParams.set(
+      'fields',
+      'items(kind,mediaLink,metadata,name,size,updated),kind,prefixes,nextPageToken'
+    );
 
     if (pageToken) {
       url.searchParams.set('pageToken', pageToken);
@@ -60,7 +65,10 @@ export async function fetchRevisions(options: FetchRevisionsOptions = {}): Promi
       throw new Error(`Failed to fetch revisions: ${response.statusText}`);
     }
 
-    const data = await response.json() as { prefixes?: string[]; nextPageToken?: string };
+    const data = (await response.json()) as {
+      prefixes?: string[];
+      nextPageToken?: string;
+    };
 
     const revisions = (data.prefixes || [])
       .map((prefix: string) => {
@@ -77,19 +85,20 @@ export async function fetchRevisions(options: FetchRevisionsOptions = {}): Promi
       allRevisions = allRevisions.slice(0, limit);
       break;
     }
-
   } while (pageToken);
 
   return allRevisions;
 }
 
-export async function fetchVersionMapping(options: FetchVersionMappingOptions = {}): Promise<VersionMapping[]> {
+export async function fetchVersionMapping(
+  options: FetchVersionMappingOptions = {}
+): Promise<VersionMapping[]> {
   const {
     baseUrl = 'https://chromiumdash.appspot.com/fetch_releases',
     channel = 'Stable',
     platform = 'Mac',
     limit = 100,
-    offset = 0
+    offset = 0,
   } = options;
 
   const url = new URL(baseUrl);
@@ -125,7 +134,10 @@ export function mergeRevisionsWithVersions(
   revisions: Revision[],
   versionMappings: VersionMapping[]
 ): AvailableVersion[] {
-  const versionMap = new Map<string, { version: string; channel: string; platform: string }>();
+  const versionMap = new Map<
+    string,
+    { version: string; channel: string; platform: string }
+  >();
 
   // Build map from revision to version info
   for (const mapping of versionMappings) {
@@ -134,23 +146,25 @@ export function mergeRevisionsWithVersions(
       versionMap.set(String(position), {
         version: mapping.version,
         channel: mapping.channel,
-        platform: mapping.platform || 'Mac'
+        platform: mapping.platform || 'Mac',
       });
     }
   }
 
   // Merge revisions with version info
-  return revisions.map(rev => {
-    const versionInfo = versionMap.get(rev.revision);
+  return revisions
+    .map(rev => {
+      const versionInfo = versionMap.get(rev.revision);
 
-    return {
-      revision: rev.revision,
-      version: versionInfo?.version || null,
-      channel: versionInfo?.channel || null,
-      platform: rev.platform,
-      hasVersion: versionInfo !== undefined
-    };
-  }).filter(item => item.version !== null);
+      return {
+        revision: rev.revision,
+        version: versionInfo?.version || null,
+        channel: versionInfo?.channel || null,
+        platform: rev.platform,
+        hasVersion: versionInfo !== undefined,
+      };
+    })
+    .filter(item => item.version !== null);
 }
 
 export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
@@ -161,14 +175,20 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
   const revisions = await fetchRevisions({ limit: 2000 });
 
   // Step 2: Fetch version mappings from ALL channels with higher limits
-  const [stableReleases, betaReleases, devReleases, canaryReleases] = await Promise.all([
-    fetchVersionMapping({ channel: 'Stable', limit: 500 }).catch(() => []),
-    fetchVersionMapping({ channel: 'Beta', limit: 500 }).catch(() => []),
-    fetchVersionMapping({ channel: 'Dev', limit: 500 }).catch(() => []),
-    fetchVersionMapping({ channel: 'Canary', limit: 500 }).catch(() => [])
-  ]);
+  const [stableReleases, betaReleases, devReleases, canaryReleases] =
+    await Promise.all([
+      fetchVersionMapping({ channel: 'Stable', limit: 500 }).catch(() => []),
+      fetchVersionMapping({ channel: 'Beta', limit: 500 }).catch(() => []),
+      fetchVersionMapping({ channel: 'Dev', limit: 500 }).catch(() => []),
+      fetchVersionMapping({ channel: 'Canary', limit: 500 }).catch(() => []),
+    ]);
 
-  const allReleases = [...stableReleases, ...betaReleases, ...devReleases, ...canaryReleases];
+  const allReleases = [
+    ...stableReleases,
+    ...betaReleases,
+    ...devReleases,
+    ...canaryReleases,
+  ];
 
   // Step 3: Build a map of position -> version info (for lookup)
   // Mac_Arm revisions are in range 1000000-1011781
@@ -180,7 +200,7 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
       if (!positionMap.has(key)) {
         positionMap.set(key, {
           version: release.version,
-          channel: release.channel
+          channel: release.channel,
         });
       }
     }
@@ -197,7 +217,9 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
     if (!versionInfo) {
       const revNum = parseInt(rev.revision);
       for (let offset = 1; offset <= 50 && !versionInfo; offset++) {
-        versionInfo = positionMap.get(String(revNum + offset)) || positionMap.get(String(revNum - offset));
+        versionInfo =
+          positionMap.get(String(revNum + offset)) ||
+          positionMap.get(String(revNum - offset));
       }
     }
 
@@ -207,7 +229,7 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
         revision: rev.revision,
         channel: versionInfo.channel,
         platform: 'Mac_Arm',
-        hasVersion: true
+        hasVersion: true,
       });
     } else {
       unversioned.push({
@@ -215,7 +237,7 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
         revision: rev.revision,
         channel: null,
         platform: 'Mac_Arm',
-        hasVersion: false
+        hasVersion: false,
       });
     }
   }
@@ -230,7 +252,10 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
   return [...versioned, ...unversioned];
 }
 
-export function resolveVersion(query: string, available: AvailableVersion[]): AvailableVersion | null {
+export function resolveVersion(
+  query: string,
+  available: AvailableVersion[]
+): AvailableVersion | null {
   if (!available || available.length === 0) {
     return null;
   }
@@ -259,7 +284,9 @@ export function resolveVersion(query: string, available: AvailableVersion[]): Av
   if (match) return match;
 
   // Try partial version match (e.g., "92" matches "92.0.4515.159")
-  match = available.find(item => item.version && item.version.startsWith(query));
+  match = available.find(
+    item => item.version && item.version.startsWith(query)
+  );
   if (match) return match;
 
   return null;
@@ -284,4 +311,3 @@ export function compareVersions(v1: string, v2: string): number {
 
   return 0;
 }
-

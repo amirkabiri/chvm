@@ -18,7 +18,7 @@ function runCLI(args = '', options = {}) {
     return execSync(command, {
       encoding: 'utf8',
       stdio: 'pipe',
-      ...options
+      ...options,
     });
   } catch (error) {
     // Return error output for testing
@@ -26,7 +26,7 @@ function runCLI(args = '', options = {}) {
       stdout: error.stdout?.toString() || '',
       stderr: error.stderr?.toString() || '',
       status: error.status,
-      error: true
+      error: true,
     };
   }
 }
@@ -60,5 +60,3 @@ describe('E2E: chvm help', () => {
     expect(output).toMatch(/\d+\.\d+\.\d+/);
   });
 });
-
-

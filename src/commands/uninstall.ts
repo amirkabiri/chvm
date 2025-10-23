@@ -9,7 +9,13 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
-import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions, removeInstalledVersion } from '../lib/storage.js';
+import {
+  getChvmHome,
+  ensureChvmDir,
+  readAvailableVersions,
+  readInstalledVersions,
+  removeInstalledVersion,
+} from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
 import { withLock } from '../lib/lock.js';
 
@@ -17,7 +23,10 @@ export interface UninstallCommandOptions {
   force?: boolean;
 }
 
-export async function uninstallCommand(version: string, options: UninstallCommandOptions): Promise<void> {
+export async function uninstallCommand(
+  version: string,
+  options: UninstallCommandOptions
+): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
@@ -66,7 +75,6 @@ export async function uninstallCommand(version: string, options: UninstallComman
 
       spinner.succeed(chalk.green(`Uninstalled ${versionToUninstall}`));
     });
-
   } catch (error) {
     console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
@@ -80,4 +88,3 @@ export function registerUninstallCommand(program: Command): void {
     .option('--force', 'Force uninstall even if running')
     .action(uninstallCommand);
 }
-

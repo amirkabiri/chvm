@@ -7,4 +7,3 @@ describe('E2E: chvm uninstall', () => {
     expect(true).toBe(true);
   });
 });
-

@@ -9,11 +9,25 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
-import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions, addInstalledVersion } from '../lib/storage.js';
+import {
+  getChvmHome,
+  ensureChvmDir,
+  readAvailableVersions,
+  readInstalledVersions,
+  addInstalledVersion,
+} from '../lib/storage.js';
 import { createLogger } from '../lib/logger.js';
 import { resolveVersion } from '../lib/mapping.js';
-import { fetchRevisionMetadata, downloadWithProgress } from '../lib/downloader.js';
-import { atomicInstall, extractZip, verifyAppBundle, calculateDirectorySize } from '../lib/installer.js';
+import {
+  fetchRevisionMetadata,
+  downloadWithProgress,
+} from '../lib/downloader.js';
+import {
+  atomicInstall,
+  extractZip,
+  verifyAppBundle,
+  calculateDirectorySize,
+} from '../lib/installer.js';
 import { withLock } from '../lib/lock.js';
 
 export interface InstallCommandOptions {
@@ -21,116 +35,145 @@ export interface InstallCommandOptions {
   quiet?: boolean;
 }
 
-export async function installCommand(version: string, options: InstallCommandOptions): Promise<void> {
+export async function installCommand(
+  version: string,
+  options: InstallCommandOptions
+): Promise<void> {
   try {
     checkPlatform();
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 
-    const logger = createLogger({ chvmHome, level: options.quiet ? 'error' : 'info' });
+    const logger = createLogger({
+      chvmHome,
+      level: options.quiet ? 'error' : 'info',
+    });
 
-    await withLock(chvmHome, async () => {
-      const available = await readAvailableVersions(chvmHome);
+    await withLock(
+      chvmHome,
+      async () => {
+        const available = await readAvailableVersions(chvmHome);
 
-      if (available.length === 0) {
-        throw new Error('No versions available. Please run "chvm update" first.');
-      }
-
-      const resolved = resolveVersion(version, available);
-
-      if (!resolved) {
-        throw new Error(`Version "${version}" not found. Run "chvm ls" to see available versions.`);
-      }
-
-      const displayVersion = resolved.version || `Revision ${resolved.revision}`;
-      console.log(chalk.blue(`Resolving '${version}' -> ${displayVersion} (revision: ${resolved.revision})`));
-
-      // Check if already installed
-      const installed = await readInstalledVersions(chvmHome);
-      const installKey = resolved.version || resolved.revision;
-      if (installed[installKey]) {
-        console.log(chalk.yellow(`Version ${displayVersion} is already installed.`));
-        return;
-      }
-
-      const spinner = ora('Fetching revision metadata...').start();
-
-      const metadata = await fetchRevisionMetadata(resolved.revision);
-      const chromeMacZip = metadata.items.find(item => item.name.includes('chrome-mac.zip'));
-
-      if (!chromeMacZip) {
-        throw new Error('chrome-mac.zip not found in revision');
-      }
-
-      spinner.text = `Downloading Chromium ${displayVersion}...`;
-
-      const tmpZip = join(chvmHome, 'tmp', `chrome-${resolved.revision}.zip`);
-      await fs.mkdir(join(chvmHome, 'tmp'), { recursive: true });
-
-      await downloadWithProgress(chromeMacZip.mediaLink, tmpZip, (progress) => {
-        spinner.text = `Downloading: ${progress.percentage}% (${Math.round(progress.downloaded / 1024 / 1024)}MB / ${Math.round(progress.total / 1024 / 1024)}MB)`;
-      });
-
-      spinner.text = 'Extracting...';
-
-      const finalPath = join(chvmHome, 'installs', `${installKey}.app`);
-
-      await atomicInstall(async (tmpDir) => {
-        const extractPath = join(tmpDir, 'extracted');
-
-        spinner.text = 'Extracting zip...';
-        await extractZip(tmpZip, extractPath, (progress) => {
-          spinner.text = `Extracting: ${progress.extractedFiles} files...`;
-        });
-
-        spinner.text = 'Looking for app bundle...';
-
-        // Find the .app bundle
-        const files = await fs.readdir(extractPath);
-        console.log('Extracted files:', files.slice(0, 10).join(', ')); // Debug
-
-        const appBundle = files.find(f => f.endsWith('.app'));
-
-        if (!appBundle) {
-          // Maybe it's in a subdirectory like chrome-mac/
-          const chromeMacDir = join(extractPath, 'chrome-mac');
-          if (existsSync(chromeMacDir)) {
-            const subFiles = await fs.readdir(chromeMacDir);
-            const subAppBundle = subFiles.find(f => f.endsWith('.app'));
-            if (subAppBundle) {
-              return join(chromeMacDir, subAppBundle);
-            }
-          }
-          throw new Error('App bundle not found in extracted files');
+        if (available.length === 0) {
+          throw new Error(
+            'No versions available. Please run "chvm update" first.'
+          );
         }
 
-        return join(extractPath, appBundle);
-      }, finalPath, chvmHome);
+        const resolved = resolveVersion(version, available);
 
-      // Cleanup tmp zip
-      await fs.unlink(tmpZip).catch(() => {});
+        if (!resolved) {
+          throw new Error(
+            `Version "${version}" not found. Run "chvm ls" to see available versions.`
+          );
+        }
 
-      spinner.text = 'Verifying installation...';
-      const isValid = await verifyAppBundle(finalPath);
+        const displayVersion =
+          resolved.version || `Revision ${resolved.revision}`;
+        console.log(
+          chalk.blue(
+            `Resolving '${version}' -> ${displayVersion} (revision: ${resolved.revision})`
+          )
+        );
 
-      if (!isValid) {
-        throw new Error('Installation verification failed: Invalid app bundle structure');
-      }
+        // Check if already installed
+        const installed = await readInstalledVersions(chvmHome);
+        const installKey = resolved.version || resolved.revision;
+        if (installed[installKey]) {
+          console.log(
+            chalk.yellow(`Version ${displayVersion} is already installed.`)
+          );
+          return;
+        }
 
-      const size = await calculateDirectorySize(finalPath);
+        const spinner = ora('Fetching revision metadata...').start();
 
-      await addInstalledVersion(chvmHome, {
-        version: installKey,
-        revision: resolved.revision,
-        path: finalPath,
-        size
-      });
+        const metadata = await fetchRevisionMetadata(resolved.revision);
+        const chromeMacZip = metadata.items.find(item =>
+          item.name.includes('chrome-mac.zip')
+        );
 
-      spinner.succeed(chalk.green(`Installed ${displayVersion} to ${finalPath}`));
-      logger.info(`Installed version ${displayVersion}`);
+        if (!chromeMacZip) {
+          throw new Error('chrome-mac.zip not found in revision');
+        }
 
-    }, { timeout: 600000 }); // 10 minute timeout
+        spinner.text = `Downloading Chromium ${displayVersion}...`;
 
+        const tmpZip = join(chvmHome, 'tmp', `chrome-${resolved.revision}.zip`);
+        await fs.mkdir(join(chvmHome, 'tmp'), { recursive: true });
+
+        await downloadWithProgress(chromeMacZip.mediaLink, tmpZip, progress => {
+          spinner.text = `Downloading: ${progress.percentage}% (${Math.round(progress.downloaded / 1024 / 1024)}MB / ${Math.round(progress.total / 1024 / 1024)}MB)`;
+        });
+
+        spinner.text = 'Extracting...';
+
+        const finalPath = join(chvmHome, 'installs', `${installKey}.app`);
+
+        await atomicInstall(
+          async tmpDir => {
+            const extractPath = join(tmpDir, 'extracted');
+
+            spinner.text = 'Extracting zip...';
+            await extractZip(tmpZip, extractPath, progress => {
+              spinner.text = `Extracting: ${progress.extractedFiles} files...`;
+            });
+
+            spinner.text = 'Looking for app bundle...';
+
+            // Find the .app bundle
+            const files = await fs.readdir(extractPath);
+            console.log('Extracted files:', files.slice(0, 10).join(', ')); // Debug
+
+            const appBundle = files.find(f => f.endsWith('.app'));
+
+            if (!appBundle) {
+              // Maybe it's in a subdirectory like chrome-mac/
+              const chromeMacDir = join(extractPath, 'chrome-mac');
+              if (existsSync(chromeMacDir)) {
+                const subFiles = await fs.readdir(chromeMacDir);
+                const subAppBundle = subFiles.find(f => f.endsWith('.app'));
+                if (subAppBundle) {
+                  return join(chromeMacDir, subAppBundle);
+                }
+              }
+              throw new Error('App bundle not found in extracted files');
+            }
+
+            return join(extractPath, appBundle);
+          },
+          finalPath,
+          chvmHome
+        );
+
+        // Cleanup tmp zip
+        await fs.unlink(tmpZip).catch(() => {});
+
+        spinner.text = 'Verifying installation...';
+        const isValid = await verifyAppBundle(finalPath);
+
+        if (!isValid) {
+          throw new Error(
+            'Installation verification failed: Invalid app bundle structure'
+          );
+        }
+
+        const size = await calculateDirectorySize(finalPath);
+
+        await addInstalledVersion(chvmHome, {
+          version: installKey,
+          revision: resolved.revision,
+          path: finalPath,
+          size,
+        });
+
+        spinner.succeed(
+          chalk.green(`Installed ${displayVersion} to ${finalPath}`)
+        );
+        logger.info(`Installed version ${displayVersion}`);
+      },
+      { timeout: 600000 }
+    ); // 10 minute timeout
   } catch (error) {
     console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
@@ -146,4 +189,3 @@ export function registerInstallCommand(program: Command): void {
     .option('--quiet', 'Minimal output')
     .action(installCommand);
 }
-

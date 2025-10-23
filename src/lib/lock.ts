@@ -14,16 +14,23 @@ export interface LockOptions {
 
 export type ReleaseLock = () => Promise<void>;
 
-export async function acquireLock(chvmHome: string, options: LockOptions = {}): Promise<ReleaseLock> {
+export async function acquireLock(
+  chvmHome: string,
+  options: LockOptions = {}
+): Promise<ReleaseLock> {
   const { timeout = 5000, staleTimeout = 60000 } = options;
   const lockFile = join(chvmHome, 'chvm.lock');
-  
+
   // Ensure lock file exists
   if (!existsSync(lockFile)) {
-    await fs.writeFile(lockFile, JSON.stringify({
-      pid: process.pid,
-      timestamp: Date.now()
-    }), 'utf8');
+    await fs.writeFile(
+      lockFile,
+      JSON.stringify({
+        pid: process.pid,
+        timestamp: Date.now(),
+      }),
+      'utf8'
+    );
   }
 
   try {
@@ -31,10 +38,10 @@ export async function acquireLock(chvmHome: string, options: LockOptions = {}): 
       retries: {
         retries: Math.floor(timeout / 100),
         minTimeout: 100,
-        maxTimeout: 1000
+        maxTimeout: 1000,
       },
       stale: staleTimeout,
-      realpath: false
+      realpath: false,
     });
 
     return release;
@@ -55,7 +62,7 @@ export async function withLock<T>(
   options: LockOptions = {}
 ): Promise<T> {
   const release = await acquireLock(chvmHome, options);
-  
+
   try {
     const result = await fn();
     return result;
@@ -64,10 +71,13 @@ export async function withLock<T>(
   }
 }
 
-export async function isLocked(chvmHome: string, options: { staleTimeout?: number } = {}): Promise<boolean> {
+export async function isLocked(
+  chvmHome: string,
+  options: { staleTimeout?: number } = {}
+): Promise<boolean> {
   const { staleTimeout = 60000 } = options;
   const lockFile = join(chvmHome, 'chvm.lock');
-  
+
   if (!existsSync(lockFile)) {
     return false;
   }
@@ -75,12 +85,11 @@ export async function isLocked(chvmHome: string, options: { staleTimeout?: numbe
   try {
     const locked = await lockfile.check(lockFile, {
       stale: staleTimeout,
-      realpath: false
+      realpath: false,
     });
-    
+
     return locked;
   } catch (error) {
     return false;
   }
 }
-

@@ -27,7 +27,7 @@ export async function extractZip(
     // -q: quiet mode
     // -d: extract to directory
     await execAsync(`unzip -q "${zipPath}" -d "${targetDir}"`);
-    
+
     if (onProgress) {
       // After extraction, count the files
       const fileCount = await countFiles(targetDir);
@@ -40,14 +40,14 @@ export async function extractZip(
 
 async function countFiles(dir: string): Promise<number> {
   let count = 0;
-  
+
   async function traverse(path: string): Promise<void> {
     try {
       const items = await fs.readdir(path);
       for (const item of items) {
         const fullPath = join(path, item);
         const stats = await fs.stat(fullPath);
-        
+
         if (stats.isDirectory()) {
           await traverse(fullPath);
         } else {
@@ -58,7 +58,7 @@ async function countFiles(dir: string): Promise<number> {
       // Ignore errors
     }
   }
-  
+
   await traverse(dir);
   return count;
 }
@@ -68,7 +68,11 @@ export async function atomicInstall(
   finalPath: string,
   chvmHome: string
 ): Promise<void> {
-  const tmpDir = join(chvmHome, 'tmp', `install-${randomBytes(8).toString('hex')}`);
+  const tmpDir = join(
+    chvmHome,
+    'tmp',
+    `install-${randomBytes(8).toString('hex')}`
+  );
 
   try {
     // Create temp directory
@@ -82,7 +86,6 @@ export async function atomicInstall(
 
     // Cleanup temp directory
     await cleanupTempDirectory(tmpDir);
-
   } catch (error) {
     // Cleanup on failure
     if (existsSync(tmpDir)) {
@@ -151,7 +154,10 @@ export async function calculateDirectorySize(dirPath: string): Promise<number> {
   return totalSize;
 }
 
-export async function moveDirectory(source: string, dest: string): Promise<void> {
+export async function moveDirectory(
+  source: string,
+  dest: string
+): Promise<void> {
   try {
     // Try atomic rename first
     await fs.rename(source, dest);
@@ -167,4 +173,3 @@ export async function cleanupTempDirectory(tmpDir: string): Promise<void> {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }
 }
-

@@ -5,7 +5,12 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { checkPlatform } from '../lib/platform-check.js';
-import { getChvmHome, ensureChvmDir, readAvailableVersions, readInstalledVersions } from '../lib/storage.js';
+import {
+  getChvmHome,
+  ensureChvmDir,
+  readAvailableVersions,
+  readInstalledVersions,
+} from '../lib/storage.js';
 
 export interface LsCommandOptions {
   json?: boolean;
@@ -24,7 +29,9 @@ export async function lsCommand(options: LsCommandOptions): Promise<void> {
       console.log(JSON.stringify({ available, installed }, null, 2));
     } else {
       if (available.length === 0) {
-        console.log(chalk.yellow('No versions available. Run "chvm update" first.'));
+        console.log(
+          chalk.yellow('No versions available. Run "chvm update" first.')
+        );
         return;
       }
 
@@ -48,7 +55,9 @@ export async function lsCommand(options: LsCommandOptions): Promise<void> {
         const installKey = item.version || item.revision;
         const isInstalled = installed[installKey];
         const status = isInstalled ? chalk.green('* installed') : '';
-        console.log(`${displayVersion}\t${item.revision}\t${item.channel}\t${status}`);
+        console.log(
+          `${displayVersion}\t${item.revision}\t${item.channel}\t${status}`
+        );
       }
       console.log();
     }
@@ -65,4 +74,3 @@ export function registerLsCommand(program: Command): void {
     .option('--json', 'Output in JSON format')
     .action(lsCommand);
 }
-
