@@ -11,4 +11,4 @@ dist/
 tests/fixtures/.chvm-test/
 tests/e2e/.chvm-test-*/
 
-
+local/
