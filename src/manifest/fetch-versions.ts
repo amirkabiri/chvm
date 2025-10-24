@@ -26,7 +26,7 @@ interface Version {
   version: string;
 }
 
-export async function fetchVersions({
+async function fetchVersions({
   channel,
   platform,
 }: {
