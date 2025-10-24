@@ -8,6 +8,7 @@
     "chvm": "./dist/cli.js"
   },
   "scripts": {
+    "manifest:fetch-versions": "bun ./src/manifest/fetch-versions.ts",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
