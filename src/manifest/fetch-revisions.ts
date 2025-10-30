@@ -1,11 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-
-interface Revision {
-  name: string;
-  size: `${number}`;
-  updated: string;
-}
+import type { Revision } from './shared/types';
 
 async function fetchRevisions(): Promise<Revision[]> {
   let allRevisions: Revision[] = [];
@@ -44,7 +39,7 @@ async function fetchRevisions(): Promise<Revision[]> {
 (async function main() {
   const revisions = await fetchRevisions();
   fs.writeFileSync(
-    path.join(__dirname, '../../public/manifest/revisions.json'),
+    path.join(__dirname, '../../local/revisions.json'),
     JSON.stringify(revisions)
   );
 })();

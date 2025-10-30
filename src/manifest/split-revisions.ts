@@ -1,11 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-
-interface Revision {
-  name: string;
-  size: `${number}`;
-  updated: string;
-}
+import type { Revision } from './shared/types';
 
 const ROOT_PATH = path.join(__dirname, '../../public/manifest/revisions');
 fs.rmSync(ROOT_PATH, { recursive: true, force: true });

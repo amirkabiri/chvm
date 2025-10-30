@@ -1,30 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-
-const PLATFORMS = ['Mac', 'Windows', 'Linux', 'Android', 'iOS'] as const;
-const CHANNELS = ['Stable', 'Beta', 'Dev', 'Canary'] as const;
-
-type Platform = (typeof PLATFORMS)[number];
-type Channel = (typeof CHANNELS)[number];
-
-interface Version {
-  channel: Channel;
-  chromium_main_branch_position: null | number;
-  hashes: {
-    angle: string;
-    chromium: string;
-    devtools: string;
-    pdfium: string;
-    skia: string;
-    v8: string;
-    webrtc: string;
-  };
-  milestone: number;
-  platform: Platform;
-  previous_version: string;
-  time: number;
-  version: string;
-}
+import type { Platform, Channel, Version } from './shared/types';
+import { PLATFORMS, CHANNELS } from './shared/constants';
 
 async function fetchVersions({
   channel,
