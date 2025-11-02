@@ -7,16 +7,30 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 
-export async function acquireLock(chvmHome, options = {}) {
+export interface LockOptions {
+  timeout?: number;
+  staleTimeout?: number;
+}
+
+export type ReleaseLock = () => Promise<void>;
+
+export async function acquireLock(
+  chvmHome: string,
+  options: LockOptions = {}
+): Promise<ReleaseLock> {
   const { timeout = 5000, staleTimeout = 60000 } = options;
   const lockFile = join(chvmHome, 'chvm.lock');
-  
+
   // Ensure lock file exists
   if (!existsSync(lockFile)) {
-    await fs.writeFile(lockFile, JSON.stringify({
-      pid: process.pid,
-      timestamp: Date.now()
-    }), 'utf8');
+    await fs.writeFile(
+      lockFile,
+      JSON.stringify({
+        pid: process.pid,
+        timestamp: Date.now(),
+      }),
+      'utf8'
+    );
   }
 
   try {
@@ -24,27 +38,31 @@ export async function acquireLock(chvmHome, options = {}) {
       retries: {
         retries: Math.floor(timeout / 100),
         minTimeout: 100,
-        maxTimeout: 1000
+        maxTimeout: 1000,
       },
       stale: staleTimeout,
-      realpath: false
+      realpath: false,
     });
 
     return release;
   } catch (error) {
-    throw new Error(`Failed to acquire lock: ${error.message}`);
+    throw new Error(`Failed to acquire lock: ${(error as Error).message}`);
   }
 }
 
-export async function releaseLock(release) {
+export async function releaseLock(release: ReleaseLock): Promise<void> {
   if (typeof release === 'function') {
     await release();
   }
 }
 
-export async function withLock(chvmHome, fn, options = {}) {
+export async function withLock<T>(
+  chvmHome: string,
+  fn: () => Promise<T>,
+  options: LockOptions = {}
+): Promise<T> {
   const release = await acquireLock(chvmHome, options);
-  
+
   try {
     const result = await fn();
     return result;
@@ -53,10 +71,13 @@ export async function withLock(chvmHome, fn, options = {}) {
   }
 }
 
-export async function isLocked(chvmHome, options = {}) {
+export async function isLocked(
+  chvmHome: string,
+  options: { staleTimeout?: number } = {}
+): Promise<boolean> {
   const { staleTimeout = 60000 } = options;
   const lockFile = join(chvmHome, 'chvm.lock');
-  
+
   if (!existsSync(lockFile)) {
     return false;
   }
@@ -64,13 +85,11 @@ export async function isLocked(chvmHome, options = {}) {
   try {
     const locked = await lockfile.check(lockFile, {
       stale: staleTimeout,
-      realpath: false
+      realpath: false,
     });
-    
+
     return locked;
   } catch (error) {
     return false;
   }
 }
-
-

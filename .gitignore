@@ -5,9 +5,10 @@ coverage/
 .env
 .vscode/
 .idea/
+dist/
 
 # Test artifacts
 tests/fixtures/.chvm-test/
 tests/e2e/.chvm-test-*/
 
-
+local/

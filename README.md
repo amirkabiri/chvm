@@ -49,13 +49,13 @@ chvm uninstall 92.0.4515.159
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `chvm update [--force]` | Update list of available versions |
-| `chvm ls [--json]` | List available and installed versions |
-| `chvm install <version>` | Install a version (version number, revision, or latest/oldest) |
-| `chvm open <version> [--disable-cors]` | Open a version (auto-installs if needed) |
-| `chvm uninstall <version> [--force]` | Uninstall a version |
+| Command                                | Description                                                    |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `chvm update [--force]`                | Update list of available versions                              |
+| `chvm ls [--json]`                     | List available and installed versions                          |
+| `chvm install <version>`               | Install a version (version number, revision, or latest/oldest) |
+| `chvm open <version> [--disable-cors]` | Open a version (auto-installs if needed)                       |
+| `chvm uninstall <version> [--force]`   | Uninstall a version                                            |
 
 ## License
 

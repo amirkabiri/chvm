@@ -6,18 +6,45 @@ import { homedir } from 'os';
 import { join } from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { Version } from '../manifest/shared/types';
 
-export function getChvmHome() {
+export interface AvailableVersion {
+  version: string | null;
+  revision: string;
+  channel: string | null;
+  platform: string;
+  hasVersion: boolean;
+}
+
+export interface InstalledVersion {
+  revision: string;
+  path: string;
+  installedAt: string;
+  size: number;
+}
+
+export interface InstalledVersions {
+  [version: string]: InstalledVersion;
+}
+
+export interface VersionInfo {
+  version: string;
+  revision: string;
+  path: string;
+  size: number;
+}
+
+export function getChvmHome(): string {
   return process.env.CHVM_HOME || join(homedir(), '.chvm');
 }
 
-export async function ensureChvmDir(chvmHome) {
+export async function ensureChvmDir(chvmHome: string): Promise<void> {
   const dirs = [
     chvmHome,
     join(chvmHome, 'installs'),
     join(chvmHome, 'profiles'),
     join(chvmHome, 'tmp'),
-    join(chvmHome, 'logs')
+    join(chvmHome, 'logs'),
   ];
 
   for (const dir of dirs) {
@@ -25,9 +52,11 @@ export async function ensureChvmDir(chvmHome) {
   }
 }
 
-export async function readAvailableVersions(chvmHome) {
+export async function readAvailableVersions(
+  chvmHome: string
+): Promise<Version[]> {
   const availablePath = join(chvmHome, 'available.json');
-  
+
   if (!existsSync(availablePath)) {
     return [];
   }
@@ -36,14 +65,19 @@ export async function readAvailableVersions(chvmHome) {
   return JSON.parse(content);
 }
 
-export async function writeAvailableVersions(chvmHome, data) {
+export async function writeAvailableVersions(
+  chvmHome: string,
+  data: AvailableVersion[]
+): Promise<void> {
   const availablePath = join(chvmHome, 'available.json');
   await fs.writeFile(availablePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-export async function readInstalledVersions(chvmHome) {
+export async function readInstalledVersions(
+  chvmHome: string
+): Promise<InstalledVersions> {
   const installedPath = join(chvmHome, 'installed.json');
-  
+
   if (!existsSync(installedPath)) {
     return {};
   }
@@ -52,30 +86,37 @@ export async function readInstalledVersions(chvmHome) {
   return JSON.parse(content);
 }
 
-export async function writeInstalledVersions(chvmHome, data) {
+export async function writeInstalledVersions(
+  chvmHome: string,
+  data: InstalledVersions
+): Promise<void> {
   const installedPath = join(chvmHome, 'installed.json');
   await fs.writeFile(installedPath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-export async function addInstalledVersion(chvmHome, versionInfo) {
+export async function addInstalledVersion(
+  chvmHome: string,
+  versionInfo: VersionInfo
+): Promise<void> {
   const installed = await readInstalledVersions(chvmHome);
-  
+
   installed[versionInfo.version] = {
     revision: versionInfo.revision,
     path: versionInfo.path,
     installedAt: new Date().toISOString(),
-    size: versionInfo.size
+    size: versionInfo.size,
   };
 
   await writeInstalledVersions(chvmHome, installed);
 }
 
-export async function removeInstalledVersion(chvmHome, version) {
+export async function removeInstalledVersion(
+  chvmHome: string,
+  version: string
+): Promise<void> {
   const installed = await readInstalledVersions(chvmHome);
-  
+
   delete installed[version];
-  
+
   await writeInstalledVersions(chvmHome, installed);
 }
-
-

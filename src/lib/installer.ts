@@ -11,35 +11,43 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-export async function extractZip(zipPath, targetDir, onProgress) {
+export interface ExtractProgress {
+  extractedFiles: number;
+}
+
+export async function extractZip(
+  zipPath: string,
+  targetDir: string,
+  onProgress?: (progress: ExtractProgress) => void
+): Promise<void> {
   await fs.mkdir(targetDir, { recursive: true });
 
   try {
     // Use command-line unzip
     // -q: quiet mode
     // -d: extract to directory
-    const { stdout, stderr } = await execAsync(`unzip -q "${zipPath}" -d "${targetDir}"`);
-    
+    await execAsync(`unzip -q "${zipPath}" -d "${targetDir}"`);
+
     if (onProgress) {
       // After extraction, count the files
       const fileCount = await countFiles(targetDir);
       onProgress({ extractedFiles: fileCount });
     }
   } catch (error) {
-    throw new Error(`Failed to extract zip: ${error.message}`);
+    throw new Error(`Failed to extract zip: ${(error as Error).message}`);
   }
 }
 
-async function countFiles(dir) {
+async function countFiles(dir: string): Promise<number> {
   let count = 0;
-  
-  async function traverse(path) {
+
+  async function traverse(path: string): Promise<void> {
     try {
       const items = await fs.readdir(path);
       for (const item of items) {
         const fullPath = join(path, item);
         const stats = await fs.stat(fullPath);
-        
+
         if (stats.isDirectory()) {
           await traverse(fullPath);
         } else {
@@ -50,13 +58,21 @@ async function countFiles(dir) {
       // Ignore errors
     }
   }
-  
+
   await traverse(dir);
   return count;
 }
 
-export async function atomicInstall(installFn, finalPath, chvmHome) {
-  const tmpDir = join(chvmHome, 'tmp', `install-${randomBytes(8).toString('hex')}`);
+export async function atomicInstall(
+  installFn: (tmpDir: string) => Promise<string>,
+  finalPath: string,
+  chvmHome: string
+): Promise<void> {
+  const tmpDir = join(
+    chvmHome,
+    'tmp',
+    `install-${randomBytes(8).toString('hex')}`
+  );
 
   try {
     // Create temp directory
@@ -70,7 +86,6 @@ export async function atomicInstall(installFn, finalPath, chvmHome) {
 
     // Cleanup temp directory
     await cleanupTempDirectory(tmpDir);
-
   } catch (error) {
     // Cleanup on failure
     if (existsSync(tmpDir)) {
@@ -80,7 +95,7 @@ export async function atomicInstall(installFn, finalPath, chvmHome) {
   }
 }
 
-export async function verifyAppBundle(appPath) {
+export async function verifyAppBundle(appPath: string): Promise<boolean> {
   if (!existsSync(appPath)) {
     return false;
   }
@@ -115,14 +130,14 @@ export async function verifyAppBundle(appPath) {
   return true;
 }
 
-export async function calculateDirectorySize(dirPath) {
+export async function calculateDirectorySize(dirPath: string): Promise<number> {
   if (!existsSync(dirPath)) {
     throw new Error(`Directory does not exist: ${dirPath}`);
   }
 
   let totalSize = 0;
 
-  async function traverse(path) {
+  async function traverse(path: string): Promise<void> {
     const stats = await fs.stat(path);
 
     if (stats.isDirectory()) {
@@ -139,7 +154,10 @@ export async function calculateDirectorySize(dirPath) {
   return totalSize;
 }
 
-export async function moveDirectory(source, dest) {
+export async function moveDirectory(
+  source: string,
+  dest: string
+): Promise<void> {
   try {
     // Try atomic rename first
     await fs.rename(source, dest);
@@ -150,10 +168,8 @@ export async function moveDirectory(source, dest) {
   }
 }
 
-export async function cleanupTempDirectory(tmpDir) {
+export async function cleanupTempDirectory(tmpDir: string): Promise<void> {
   if (existsSync(tmpDir)) {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }
 }
-
-
