@@ -1,6 +1,7 @@
 /**
  * Mapping module - Revision to Version mapping
  */
+import { Version } from '../manifest/shared/types';
 
 export interface Revision {
   revision: string;
@@ -254,19 +255,14 @@ export async function buildAvailableVersions(): Promise<AvailableVersion[]> {
 
 export function resolveVersion(
   query: string,
-  available: AvailableVersion[]
-): AvailableVersion | null {
+  available: Version[]
+): Version | null {
   if (!available || available.length === 0) {
     return null;
   }
 
   // Handle special keywords
   if (query === 'latest') {
-    // Return first versioned item, or first unversioned if none have versions
-    const versioned = available.filter(item => item.hasVersion);
-    if (versioned.length > 0) {
-      return versioned[0];
-    }
     return available[0];
   }
 
@@ -277,10 +273,6 @@ export function resolveVersion(
 
   // Try exact version match
   let match = available.find(item => item.version === query);
-  if (match) return match;
-
-  // Try exact revision match
-  match = available.find(item => item.revision === query);
   if (match) return match;
 
   // Try partial version match (e.g., "92" matches "92.0.4515.159")

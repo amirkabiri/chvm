@@ -8,7 +8,6 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
-import { checkPlatform } from '../lib/platform-check.js';
 import {
   getChvmHome,
   ensureChvmDir,
@@ -28,7 +27,6 @@ export async function uninstallCommand(
   options: UninstallCommandOptions
 ): Promise<void> {
   try {
-    checkPlatform();
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 

@@ -6,6 +6,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { Version } from '../manifest/shared/types';
 
 export interface AvailableVersion {
   version: string | null;
@@ -53,7 +54,7 @@ export async function ensureChvmDir(chvmHome: string): Promise<void> {
 
 export async function readAvailableVersions(
   chvmHome: string
-): Promise<AvailableVersion[]> {
+): Promise<Version[]> {
   const availablePath = join(chvmHome, 'available.json');
 
   if (!existsSync(availablePath)) {

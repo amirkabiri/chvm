@@ -4,7 +4,6 @@
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { checkPlatform } from '../lib/platform-check.js';
 import {
   getChvmHome,
   ensureChvmDir,
@@ -18,7 +17,6 @@ export interface LsCommandOptions {
 
 export async function lsCommand(options: LsCommandOptions): Promise<void> {
   try {
-    checkPlatform();
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 
@@ -36,27 +34,14 @@ export async function lsCommand(options: LsCommandOptions): Promise<void> {
       }
 
       console.log(chalk.bold('\nAvailable Chromium Versions:\n'));
-      console.log(chalk.gray('VERSION\tREVISION\tCHANNEL\tSTATUS'));
+      console.log(chalk.gray('VERSION\tCHANNEL\tSTATUS'));
       console.log(chalk.gray('─'.repeat(60)));
 
-      const printedMajors = new Set<string>();
       for (const item of available) {
-        if (!item.version) {
-          continue;
-        }
-        const major = item.version.split('.')[0];
-        if (printedMajors.has(major)) {
-          continue;
-        }
-        printedMajors.add(major);
-
-        const displayVersion = item.version || chalk.gray(`[${item.revision}]`);
-        // Check both version and revision for installed status
-        const installKey = item.version || item.revision;
-        const isInstalled = installed[installKey];
+        const isInstalled = installed[item.version];
         const status = isInstalled ? chalk.green('* installed') : '';
         console.log(
-          `${displayVersion}\t${item.revision}\t${item.channel}\t${status}`
+          `${item.version.split('.')[0]}\t${item.channel}\t${status}`
         );
       }
       console.log();

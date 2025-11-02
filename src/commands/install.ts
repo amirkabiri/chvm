@@ -8,7 +8,6 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
-import { checkPlatform } from '../lib/platform-check.js';
 import {
   getChvmHome,
   ensureChvmDir,
@@ -40,7 +39,6 @@ export async function installCommand(
   options: InstallCommandOptions
 ): Promise<void> {
   try {
-    checkPlatform();
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 
@@ -68,17 +66,17 @@ export async function installCommand(
           );
         }
 
-        const displayVersion =
-          resolved.version || `Revision ${resolved.revision}`;
+        const revision = String(resolved.chromium_main_branch_position!);
+        const displayVersion = resolved.version || `Revision ${revision}`;
         console.log(
           chalk.blue(
-            `Resolving '${version}' -> ${displayVersion} (revision: ${resolved.revision})`
+            `Resolving '${version}' -> ${displayVersion} (revision: ${revision})`
           )
         );
 
         // Check if already installed
         const installed = await readInstalledVersions(chvmHome);
-        const installKey = resolved.version || resolved.revision;
+        const installKey = resolved.version || revision;
         if (installed[installKey]) {
           console.log(
             chalk.yellow(`Version ${displayVersion} is already installed.`)
@@ -88,7 +86,7 @@ export async function installCommand(
 
         const spinner = ora('Fetching revision metadata...').start();
 
-        const metadata = await fetchRevisionMetadata(resolved.revision);
+        const metadata = await fetchRevisionMetadata(revision);
         const chromeMacZip = metadata.items.find(item =>
           item.name.includes('chrome-mac.zip')
         );
@@ -99,7 +97,7 @@ export async function installCommand(
 
         spinner.text = `Downloading Chromium ${displayVersion}...`;
 
-        const tmpZip = join(chvmHome, 'tmp', `chrome-${resolved.revision}.zip`);
+        const tmpZip = join(chvmHome, 'tmp', `chrome-${revision}.zip`);
         await fs.mkdir(join(chvmHome, 'tmp'), { recursive: true });
 
         await downloadWithProgress(chromeMacZip.mediaLink, tmpZip, progress => {
@@ -162,7 +160,7 @@ export async function installCommand(
 
         await addInstalledVersion(chvmHome, {
           version: installKey,
-          revision: resolved.revision,
+          revision: revision,
           path: finalPath,
           size,
         });

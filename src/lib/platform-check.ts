@@ -8,17 +8,6 @@ export interface PlatformInfo {
   isSupported: boolean;
 }
 
-export function checkPlatform(): void {
-  const info = getPlatformInfo();
-
-  if (!info.isSupported) {
-    throw new Error(
-      `chvm only supports macOS with ARM architecture (Apple Silicon).\n` +
-        `Current platform: ${info.platform} ${info.arch}`
-    );
-  }
-}
-
 export function getPlatformInfo(): PlatformInfo {
   return {
     platform: process.platform,

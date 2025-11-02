@@ -9,7 +9,6 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
-import { checkPlatform } from '../lib/platform-check.js';
 import {
   getChvmHome,
   ensureChvmDir,
@@ -29,7 +28,6 @@ export async function openCommand(
   options: OpenCommandOptions
 ): Promise<void> {
   try {
-    checkPlatform();
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 
@@ -50,16 +48,15 @@ export async function openCommand(
         );
       }
 
-      const installKey = resolved.version || resolved.revision;
-      const displayVersion =
-        resolved.version || `Revision ${resolved.revision}`;
+      const revision = String(resolved.chromium_main_branch_position!);
+      const installKey = resolved.version;
 
       if (!installed[installKey]) {
         console.log(
-          chalk.blue(`${displayVersion} not installed. Installing...`)
+          chalk.blue(`${resolved.version} not installed. Installing...`)
         );
         // Use revision for install if no version
-        await execAsync(`node ${process.argv[1]} install ${resolved.revision}`);
+        await execAsync(`node ${process.argv[1]} install ${revision}`);
 
         // Reload installed versions
         const reloaded = await readInstalledVersions(chvmHome);
