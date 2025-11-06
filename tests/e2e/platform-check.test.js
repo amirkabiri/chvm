@@ -6,7 +6,7 @@ import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const CLI_PATH = join(__dirname, '../../src/cli.js');
+const CLI_PATH = join(__dirname, '../../src/cli.cjs');
 
 function runCLI(args = '', env = {}) {
   const command = `node ${CLI_PATH} ${args}`;

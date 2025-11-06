@@ -5,7 +5,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const CLI_PATH = join(__dirname, '../../src/cli.js');
+const CLI_PATH = join(__dirname, '../../src/cli.cjs');
 
 /**
  * Helper function to execute CLI commands

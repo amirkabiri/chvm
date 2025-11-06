@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const CLI_PATH = join(__dirname, '../../src/cli.js');
+export const CLI_PATH = join(__dirname, '../../src/cli.cjs');
 
 export interface RunCLIOptions extends ExecSyncOptions {
   env?: NodeJS.ProcessEnv;
