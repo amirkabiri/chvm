@@ -39,10 +39,6 @@ export interface ValidationResult {
   size: number;
 }
 
-export function getDownloadUrl(revision: string): string {
-  return `https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Mac_Arm%2F${revision}%2Fchrome-mac.zip?alt=media`;
-}
-
 export async function fetchRevisionMetadata(
   revision: string
 ): Promise<RevisionMetadata> {

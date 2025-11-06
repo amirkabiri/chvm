@@ -16,26 +16,6 @@ describe('Unit: downloader module', () => {
     }
   });
 
-  describe('getDownloadUrl', () => {
-    it('should construct correct download URL for revision', async () => {
-      const { getDownloadUrl } = await import('../../src/lib/downloader.js');
-
-      const url = getDownloadUrl('882387');
-
-      expect(url).toContain('chromium-browser-snapshots');
-      expect(url).toContain('Mac_Arm');
-      expect(url).toContain('882387');
-    });
-
-    it('should include chrome-mac.zip in the URL', async () => {
-      const { getDownloadUrl } = await import('../../src/lib/downloader.js');
-
-      const url = getDownloadUrl('882387');
-
-      expect(url).toContain('chrome-mac.zip');
-    });
-  });
-
   describe('fetchRevisionMetadata', () => {
     it('should fetch metadata for a revision', async () => {
       const { fetchRevisionMetadata } = await import(
