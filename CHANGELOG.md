@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/amirkabiri/chvm/compare/v1.1.1...v1.1.2) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* add author and repository keys to package.json ([c73be2d](https://github.com/amirkabiri/chvm/commit/c73be2dbb868d5fd2763ab34696b72f44bfcceac))
+
 ## [1.1.1](https://github.com/amirkabiri/chvm/compare/v1.1.0...v1.1.1) (2025-11-06)
 
 ### 🐛 Bug Fixes
