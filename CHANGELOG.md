@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/amirkabiri/chvm/compare/v1.0.7...v1.1.0) (2025-11-06)
+
+### ✨ Features
+
+* bundler ([8668251](https://github.com/amirkabiri/chvm/commit/8668251a824968359863d29277fd4e93dd4212dd))
+
 ## [1.0.7](https://github.com/amirkabiri/chvm/compare/v1.0.6...v1.0.7) (2025-11-06)
 
 ### 📚 Documentation
