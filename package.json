@@ -1,6 +1,6 @@
 {
   "name": "chvm",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Chrome Version Manager - Manage and run multiple Chromium versions on macOS ARM",
   "type": "module",
   "main": "./dist/cli.cjs",
