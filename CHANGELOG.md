@@ -1,3 +1,9 @@
+## [1.1.9](https://github.com/amirkabiri/chvm/compare/v1.1.8...v1.1.9) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* automatic version bump in package.json and dependency list optimization fixed ([ae64198](https://github.com/amirkabiri/chvm/commit/ae64198a8e4a9681ba0339e3a228628a21368d96))
+
 ## [1.1.8](https://github.com/amirkabiri/chvm/compare/v1.1.7...v1.1.8) (2025-11-06)
 
 ### 🐛 Bug Fixes
