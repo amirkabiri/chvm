@@ -1,3 +1,9 @@
+## [1.1.3](https://github.com/amirkabiri/chvm/compare/v1.1.2...v1.1.3) (2025-11-06)
+
+### ⚡ Performance Improvements
+
+* refactor tsup.config.ts and minify bundle ([0f9678d](https://github.com/amirkabiri/chvm/commit/0f9678d04e3f95e08a6743ed3351475eff291d5c))
+
 ## [1.1.2](https://github.com/amirkabiri/chvm/compare/v1.1.1...v1.1.2) (2025-11-06)
 
 ### 🐛 Bug Fixes
