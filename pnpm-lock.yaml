@@ -7,22 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      chalk:
-        specifier: ^5.3.0
-        version: 5.6.2
-      cli-progress:
-        specifier: ^3.12.0
-        version: 3.12.0
-      commander:
-        specifier: ^11.1.0
-        version: 11.1.0
-      ora:
-        specifier: ^7.0.1
-        version: 7.0.1
-      proper-lockfile:
-        specifier: ^4.1.2
-        version: 4.1.2
     devDependencies:
       '@jest/globals':
         specifier: ^29.7.0
@@ -48,15 +32,30 @@ importers:
       '@types/proper-lockfile':
         specifier: ^4.1.4
         version: 4.1.4
+      chalk:
+        specifier: ^5.3.0
+        version: 5.6.2
+      cli-progress:
+        specifier: ^3.12.0
+        version: 3.12.0
+      commander:
+        specifier: ^11.1.0
+        version: 11.1.0
       conventional-changelog-conventionalcommits:
         specifier: ^9.1.0
         version: 9.1.0
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@20.19.23)
+      ora:
+        specifier: ^7.0.1
+        version: 7.0.1
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
+      proper-lockfile:
+        specifier: ^4.1.2
+        version: 4.1.2
       semantic-release:
         specifier: ^25.0.1
         version: 25.0.1(typescript@5.9.3)
