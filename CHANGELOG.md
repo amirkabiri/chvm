@@ -1,3 +1,9 @@
+## [1.1.7](https://github.com/amirkabiri/chvm/compare/v1.1.6...v1.1.7) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* update manifest URL to point to the main branch ([8eebd30](https://github.com/amirkabiri/chvm/commit/8eebd302e1772f6dd3101af950084147f842f225))
+
 ## [1.1.6](https://github.com/amirkabiri/chvm/compare/v1.1.5...v1.1.6) (2025-11-06)
 
 ### 🐛 Bug Fixes
