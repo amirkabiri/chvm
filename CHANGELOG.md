@@ -1,3 +1,9 @@
+## [1.1.8](https://github.com/amirkabiri/chvm/compare/v1.1.7...v1.1.8) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* don't upload root package.json to npm ([c3be049](https://github.com/amirkabiri/chvm/commit/c3be0497061f743cadd371b9350d5908c29dc15c))
+
 ## [1.1.7](https://github.com/amirkabiri/chvm/compare/v1.1.6...v1.1.7) (2025-11-06)
 
 ### 🐛 Bug Fixes
