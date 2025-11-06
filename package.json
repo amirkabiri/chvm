@@ -10,7 +10,7 @@
   "scripts": {
     "manifest:fetch-versions": "bun ./src/manifest/fetch-versions.ts",
     "build": "tsup",
-    "build:watch": "tsc --watch",
+    "build:watch": "tsup --watch",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run build",
