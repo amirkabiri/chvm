@@ -1,3 +1,9 @@
+## [1.1.6](https://github.com/amirkabiri/chvm/compare/v1.1.5...v1.1.6) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* rename chrome to chromium ([f14b1cd](https://github.com/amirkabiri/chvm/commit/f14b1cd8f2edd47267dff4138b3785e9ea16db31))
+
 ## [1.1.5](https://github.com/amirkabiri/chvm/compare/v1.1.4...v1.1.5) (2025-11-06)
 
 ### 🐛 Bug Fixes
