@@ -53,7 +53,16 @@
       {
         "assets": [
           {
-            "path": "dist/**"
+            "path": "dist/cli.cjs"
+          },
+          {
+            "path": "CHANGELOG.md"
+          },
+          {
+            "path": "package.json"
+          },
+          {
+            "path": "README.md"
           }
         ]
       }
