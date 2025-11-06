@@ -35,7 +35,7 @@ describe('E2E: chvm help', () => {
   it('should display help when no arguments provided', () => {
     const output = runCLI('');
     expect(output).toContain('chvm');
-    expect(output).toContain('Chrome Version Manager');
+    expect(output).toContain('Chromium Version Manager');
     expect(output).toContain('ls');
     expect(output).toContain('update');
     expect(output).toContain('install');

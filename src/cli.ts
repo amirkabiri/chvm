@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * CHVM - Chrome Version Manager
+ * CHVM - Chromium Version Manager
  * Entry point for CLI
  */
 
@@ -20,7 +20,7 @@ const program = new Command();
 program
   .name('chvm')
   .description(
-    'Chrome Version Manager - Manage multiple Chromium versions on macOS ARM'
+    'Chromium Version Manager - Manage multiple Chromium versions on macOS ARM'
   )
   .version(packageJson.version);
 
