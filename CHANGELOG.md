@@ -1,3 +1,9 @@
+## [1.1.4](https://github.com/amirkabiri/chvm/compare/v1.1.3...v1.1.4) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* better names in github release section ([0baed4a](https://github.com/amirkabiri/chvm/commit/0baed4acf26ff23848471c7a230d3986c90ff1fa))
+
 ## [1.1.3](https://github.com/amirkabiri/chvm/compare/v1.1.2...v1.1.3) (2025-11-06)
 
 ### ⚡ Performance Improvements
