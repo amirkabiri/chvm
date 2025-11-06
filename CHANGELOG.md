@@ -1,3 +1,9 @@
+## [1.1.11](https://github.com/amirkabiri/chvm/compare/v1.1.10...v1.1.11) (2025-11-06)
+
+### ♻️ Code Refactoring
+
+* remove unused function ([3706f33](https://github.com/amirkabiri/chvm/commit/3706f334604f4233b3cc19ea7747303a1a39eb12))
+
 ## [1.1.10](https://github.com/amirkabiri/chvm/compare/v1.1.9...v1.1.10) (2025-11-06)
 
 ### 🐛 Bug Fixes
