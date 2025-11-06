@@ -13,6 +13,7 @@ import {
   registerOpenCommand,
   registerUninstallCommand,
 } from './commands/index.js';
+import packageJson from '../package.json';
 
 const program = new Command();
 
@@ -21,7 +22,7 @@ program
   .description(
     'Chrome Version Manager - Manage multiple Chromium versions on macOS ARM'
   )
-  .version('1.0.0');
+  .version(packageJson.version);
 
 // Help command (default)
 program
