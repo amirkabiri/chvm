@@ -1,3 +1,9 @@
+## [1.1.5](https://github.com/amirkabiri/chvm/compare/v1.1.4...v1.1.5) (2025-11-06)
+
+### 🐛 Bug Fixes
+
+* print version command ([cdb5195](https://github.com/amirkabiri/chvm/commit/cdb519550f298b6c736e33a01a49edcb5f4194b5))
+
 ## [1.1.4](https://github.com/amirkabiri/chvm/compare/v1.1.3...v1.1.4) (2025-11-06)
 
 ### 🐛 Bug Fixes
