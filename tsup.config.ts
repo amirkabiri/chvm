@@ -8,8 +8,13 @@ function copyFiles(files: string[]): Promise<void> {
   ).then(() => void 0);
 }
 
-function createFinalPackageJson() {
-  const newPackageJson = JSON.parse(JSON.stringify(packageJson));
+async function createFinalPackageJson() {
+  // Read the latest package.json to get the updated version
+  const currentPackageJson = JSON.parse(
+    await fs.readFile('./package.json', 'utf-8')
+  );
+  
+  const newPackageJson = JSON.parse(JSON.stringify(currentPackageJson));
   delete newPackageJson.dependencies;
   delete newPackageJson.devDependencies;
   delete newPackageJson.scripts;
@@ -33,7 +38,7 @@ export default defineConfig({
   onSuccess: async () => {
     await fs.writeFile(
       './dist/package.json',
-      JSON.stringify(createFinalPackageJson(), null, 2)
+      JSON.stringify(await createFinalPackageJson(), null, 2)
     );
     await copyFiles(['README.md', 'CHANGELOG.md']);
     console.log('Build successful');
