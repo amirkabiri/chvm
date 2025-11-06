@@ -63,7 +63,7 @@ export async function updateCommand(
     const spinner = ora('Fetching available Chromium versions...').start();
 
     fetch(
-      `https://raw.githubusercontent.com/amirkabiri/chvm/refs/heads/new-stable-version/public/manifest/${getManifestPlatform()}.json`
+      `https://raw.githubusercontent.com/amirkabiri/chvm/refs/heads/main/public/manifest/${getManifestPlatform()}.json`
     )
       .then(res => res.json())
       .then(data => {
