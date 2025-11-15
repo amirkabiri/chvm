@@ -275,6 +275,9 @@ export function resolveVersion(
   let match = available.find(item => item.version === query);
   if (match) return match;
 
+  match = available.find(item => item.chromium_main_branch_position?.toString() === query);
+  if (match) return match;
+
   // Try partial version match (e.g., "92" matches "92.0.4515.159")
   match = available.find(
     item => item.version && item.version.startsWith(query)
