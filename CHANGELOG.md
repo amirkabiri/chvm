@@ -1,3 +1,13 @@
+## [1.1.12](https://github.com/amirkabiri/chvm/compare/v1.1.11...v1.1.12) (2025-12-05)
+
+### 🐛 Bug Fixes
+
+* remove dependency to unzip command ([477026d](https://github.com/amirkabiri/chvm/commit/477026dd0e8cc26b3e310bc6f51ce8bce5752576))
+
+### 👷 CI/CD
+
+* disable audit in pipeline temporarily ([4dcb280](https://github.com/amirkabiri/chvm/commit/4dcb280e7230be52c47cd67cd3e4d4d1db08da1b))
+
 ## [1.1.11](https://github.com/amirkabiri/chvm/compare/v1.1.10...v1.1.11) (2025-11-06)
 
 ### ♻️ Code Refactoring
