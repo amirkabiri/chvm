@@ -1,15 +1,8 @@
-/**
- * Installer module - Atomic install with command-line unzip
- */
-
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { randomBytes } from 'crypto';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import AdmZip from 'adm-zip';
 
 export interface ExtractProgress {
   extractedFiles: number;
@@ -23,15 +16,43 @@ export async function extractZip(
   await fs.mkdir(targetDir, { recursive: true });
 
   try {
-    // Use command-line unzip
-    // -q: quiet mode
-    // -d: extract to directory
-    await execAsync(`unzip -q "${zipPath}" -d "${targetDir}"`);
+    const zip = new AdmZip(zipPath);
+    const entries = zip.getEntries();
 
-    if (onProgress) {
-      // After extraction, count the files
-      const fileCount = await countFiles(targetDir);
-      onProgress({ extractedFiles: fileCount });
+    let extractedFiles = 0;
+
+    for (const entry of entries) {
+      const targetPath = join(targetDir, entry.entryName);
+
+      if (entry.isDirectory) {
+        await fs.mkdir(targetPath, { recursive: true });
+      } else {
+        // Ensure parent directory exists
+        await fs.mkdir(dirname(targetPath), { recursive: true });
+
+        // Extract file
+        const content = entry.getData();
+        await fs.writeFile(targetPath, content);
+
+        // Preserve Unix file permissions from zip entry
+        const unixMode = (entry.attr >> 16) & 0xffff;
+        if (unixMode !== 0) {
+          await fs.chmod(targetPath, unixMode);
+        }
+
+        extractedFiles++;
+
+        if (onProgress) {
+          onProgress({
+            extractedFiles,
+          });
+        }
+      }
+    }
+
+    // Final progress callback if no files were extracted but callback exists
+    if (onProgress && extractedFiles === 0) {
+      onProgress({ extractedFiles: 0 });
     }
   } catch (error) {
     throw new Error(`Failed to extract zip: ${(error as Error).message}`);

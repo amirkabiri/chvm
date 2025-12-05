@@ -15,7 +15,6 @@ Add this alias to your `~/.zshrc` or `~/.bashrc` to make it permanent.
 ## Requirements
 
 - Node.js >= 20.0.0
-- unzip command // brew install unzip
 
 ## Quick Start
 

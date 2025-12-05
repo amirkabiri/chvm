@@ -6,5 +6,12 @@ export default defineConfig({
   shims: true,
   clean: true,
   minify: true,
-  noExternal: ['chalk', 'cli-progress', 'commander', 'ora', 'proper-lockfile'],
+  noExternal: [
+    'chalk',
+    'cli-progress',
+    'commander',
+    'ora',
+    'proper-lockfile',
+    'adm-zip',
+  ],
 });
