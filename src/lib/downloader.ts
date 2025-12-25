@@ -40,15 +40,25 @@ export interface ValidationResult {
 }
 
 export async function fetchRevisionMetadata(
-  revision: string
+  revision: string,
+  platformPrefix: string
 ): Promise<RevisionMetadata> {
-  const url = `https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o?delimiter=/&prefix=Mac_Arm/${revision}/&fields=items(kind,mediaLink,metadata,name,size,updated),kind,prefixes,nextPageToken`;
+  // Use URL object for proper encoding
+  const url = new URL(
+    'https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o'
+  );
+  url.searchParams.set('delimiter', '/');
+  url.searchParams.set('prefix', `${platformPrefix}/${revision}/`);
+  url.searchParams.set(
+    'fields',
+    'items(kind,mediaLink,metadata,name,size,updated),kind,prefixes,nextPageToken'
+  );
 
-  const response = await fetch(url);
+  const response = await fetch(url.toString());
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch metadata for revision ${revision}: ${response.statusText}`
+      `Failed to fetch metadata for revision ${revision}: ${response.statusText} (${response.status})`
     );
   }
 
