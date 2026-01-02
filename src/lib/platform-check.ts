@@ -21,15 +21,15 @@ export function isMacOSArm(): boolean {
 }
 
 export function isWindows(): boolean {
-  return process.platform === 'win32';
+  return process.platform === 'win32' && process.arch === 'x64';
 }
 
 export function getChromiumPlatformPrefix(): string {
-  if (process.platform === 'darwin' && process.arch === 'arm64') {
+  if (isMacOSArm()) {
     return 'Mac_Arm';
   }
 
-  if (process.platform === 'win32' && process.arch === 'x64') {
+  if (isWindows()) {
     return 'Win_x64';
   }
 

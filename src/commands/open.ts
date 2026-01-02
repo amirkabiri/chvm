@@ -122,10 +122,12 @@ export async function openCommand(
         throw new Error(`chrome.exe not found at ${exePath}`);
       }
 
-      spawn(exePath, args, {
-        detached: true,
-        stdio: 'ignore',
-      }).unref();
+      const command = `"${exePath}" ${args.join(' ')}`;
+      exec(command, error => {
+        if (error) {
+          console.error(chalk.red(`Failed to open: ${error.message}`));
+        }
+      });
 
       return;
     }

@@ -3,6 +3,7 @@
  */
 
 import { createWriteStream, existsSync, statSync } from 'fs';
+import { getChromiumPlatformPrefix } from './platform-check.js';
 
 export interface RevisionMetadata {
   items: Array<{
@@ -40,9 +41,9 @@ export interface ValidationResult {
 }
 
 export async function fetchRevisionMetadata(
-  revision: string,
-  platformPrefix: string
+  revision: string
 ): Promise<RevisionMetadata> {
+  const platformPrefix = getChromiumPlatformPrefix();
   // Use URL object for proper encoding
   const url = new URL(
     'https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o'

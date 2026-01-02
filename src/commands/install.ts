@@ -28,7 +28,7 @@ import {
   calculateDirectorySize,
 } from '../lib/installer.js';
 import { withLock } from '../lib/lock.js';
-import { getChromiumPlatformPrefix } from '../lib/platform-check.js';
+import { isMacOSArm, isWindows } from '../lib/platform-check.js';
 
 export interface InstallCommandOptions {
   cache?: boolean;
@@ -87,19 +87,17 @@ export async function installCommand(
 
         const spinner = ora('Fetching revision metadata...').start();
 
-        const platformPrefix = getChromiumPlatformPrefix();
-
-        const metadata = await fetchRevisionMetadata(revision, platformPrefix);
+        const metadata = await fetchRevisionMetadata(revision);
 
         // Determine expected zip name based on platform
         let expectedZipName = '';
-        if (platformPrefix.startsWith('Win')) {
+        if (isWindows()) {
           // chrome-win.zip for Win_x64
           expectedZipName = 'chrome-win.zip';
-        } else if (platformPrefix.startsWith('Mac')) {
+        } else if (isMacOSArm()) {
           expectedZipName = 'chrome-mac.zip';
         } else {
-          throw new Error(`Unsupported platform prefix: ${platformPrefix}`);
+          throw new Error(`Unsupported platform`);
         }
 
         const chromeZip = metadata.items.find(item =>
@@ -124,7 +122,7 @@ export async function installCommand(
         const finalPath = join(
           chvmHome,
           'installs',
-          platformPrefix.startsWith('Win') ? installKey : `${installKey}.app`
+          isWindows() ? installKey : `${installKey}.app`
         );
 
         await atomicInstall(
@@ -143,7 +141,7 @@ export async function installCommand(
             console.log('Extracted files:', files.slice(0, 10).join(', ')); // Debug
 
             // Windows
-            if (platformPrefix.startsWith('Win')) {
+            if (isWindows()) {
               const chromeWinDir = files.find(
                 f => f === 'chrome-win' || f.includes('chrome-win')
               );
@@ -155,7 +153,7 @@ export async function installCommand(
                 return extractPath;
               }
               throw new Error('chrome.exe or chrome-win folder not found');
-            } else if (platformPrefix.startsWith('Mac')) {
+            } else if (isMacOSArm()) {
               // Mac
               const appBundle = files.find(f => f.endsWith('.app'));
 
@@ -175,7 +173,7 @@ export async function installCommand(
               return join(extractPath, appBundle);
             }
 
-            throw new Error(`Unsupported platform prefix: ${platformPrefix}`);
+            throw new Error(`Unsupported platform`);
           },
           finalPath,
           chvmHome
