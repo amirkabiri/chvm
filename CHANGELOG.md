@@ -1,3 +1,14 @@
+## [1.2.0](https://github.com/amirkabiri/chvm/compare/v1.1.12...v1.2.0) (2026-02-13)
+
+### ✨ Features
+
+* **platform:** add Windows support and improve cross platform handling ([3f91e99](https://github.com/amirkabiri/chvm/commit/3f91e99ddf403f0a206451859a5fac8aedca4e18))
+* windows support ([255029e](https://github.com/amirkabiri/chvm/commit/255029e8d090cdaf6bd057b706fe9674f7cdb1b8))
+
+### ♻️ Code Refactoring
+
+* **platform:** use platform-check library and simplify fetchRevisionMetadata ([d5b2f49](https://github.com/amirkabiri/chvm/commit/d5b2f497cfa22456ce2fe877db4523ccce551cd9))
+
 ## [1.1.12](https://github.com/amirkabiri/chvm/compare/v1.1.11...v1.1.12) (2025-12-05)
 
 ### 🐛 Bug Fixes
