@@ -1,3 +1,9 @@
+## [1.2.1](https://github.com/amirkabiri/chvm/compare/v1.2.0...v1.2.1) (2026-02-13)
+
+### 📚 Documentation
+
+* add windows support to readme ([ef47f9b](https://github.com/amirkabiri/chvm/commit/ef47f9b12116cf68d29814e1551bdfd7a84ec222))
+
 ## [1.2.0](https://github.com/amirkabiri/chvm/compare/v1.1.12...v1.2.0) (2026-02-13)
 
 ### ✨ Features
