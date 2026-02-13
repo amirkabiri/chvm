@@ -1,8 +1,9 @@
 import fs from 'fs/promises';
+import AdmZip from 'adm-zip';
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { randomBytes } from 'crypto';
-import AdmZip from 'adm-zip';
+import { isWindows, isMacOSArm } from './platform-check.js';
 
 export interface ExtractProgress {
   extractedFiles: number;
@@ -100,7 +101,12 @@ export async function atomicInstall(
     await fs.mkdir(tmpDir, { recursive: true });
 
     // Run install function
-    const installedPath = await installFn(tmpDir);
+    let installedPath = await installFn(tmpDir);
+
+    // Normalize install path on Windows
+    if (isWindows()) {
+      installedPath = resolveWindowsAppPath(installedPath);
+    }
 
     // Move to final location atomically
     await moveDirectory(installedPath, finalPath);
@@ -122,33 +128,50 @@ export async function verifyAppBundle(appPath: string): Promise<boolean> {
   }
 
   // Check for required macOS app structure
-  const contentsDir = join(appPath, 'Contents');
-  const macOSDir = join(contentsDir, 'MacOS');
+  if (isMacOSArm()) {
+    const contentsDir = join(appPath, 'Contents');
+    const macOSDir = join(contentsDir, 'MacOS');
 
-  if (!existsSync(contentsDir)) {
-    return false;
-  }
-
-  if (!existsSync(macOSDir)) {
-    return false;
-  }
-
-  // Fix executable permissions for all files in MacOS directory
-  try {
-    const files = await fs.readdir(macOSDir);
-    for (const file of files) {
-      const filePath = join(macOSDir, file);
-      const stats = await fs.stat(filePath);
-      if (stats.isFile()) {
-        // Make executable: chmod +x
-        await fs.chmod(filePath, 0o755);
-      }
+    if (!existsSync(contentsDir)) {
+      return false;
     }
-  } catch (err) {
-    // If we can't set permissions, continue anyway
+
+    if (!existsSync(macOSDir)) {
+      return false;
+    }
+
+    // Fix executable permissions for all files in MacOS directory
+    try {
+      const files = await fs.readdir(macOSDir);
+      for (const file of files) {
+        const filePath = join(macOSDir, file);
+        const stats = await fs.stat(filePath);
+        if (stats.isFile()) {
+          // Make executable: chmod +x
+          await fs.chmod(filePath, 0o755);
+        }
+      }
+    } catch (err) {
+      // If we can't set permissions, continue anyway
+      console.log('Error setting permissions:', err);
+    }
+
+    return true;
   }
 
-  return true;
+  if (isWindows()) {
+    const directExe = join(appPath, 'chrome.exe');
+    const headlessExe = join(appPath, 'chrome-headless-shell.exe');
+    const nestedExe = join(appPath, 'chrome-win', 'chrome.exe');
+
+    if (existsSync(directExe)) return true;
+    if (existsSync(headlessExe)) return true;
+    if (existsSync(nestedExe)) return true;
+
+    return false;
+  }
+
+  return false;
 }
 
 export async function calculateDirectorySize(dirPath: string): Promise<number> {
@@ -193,4 +216,14 @@ export async function cleanupTempDirectory(tmpDir: string): Promise<void> {
   if (existsSync(tmpDir)) {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }
+}
+
+export function resolveWindowsAppPath(installDir: string): string {
+  const directExe = join(installDir, 'chrome.exe');
+  const nestedExe = join(installDir, 'chrome-win', 'chrome.exe');
+
+  if (existsSync(directExe)) return installDir;
+  if (existsSync(nestedExe)) return join(installDir, 'chrome-win');
+
+  return installDir;
 }

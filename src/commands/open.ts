@@ -3,7 +3,7 @@
  */
 
 import chalk from 'chalk';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
@@ -16,6 +16,8 @@ import {
   readInstalledVersions,
 } from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
+import { resolveWindowsAppPath } from '../lib/installer.js';
+import { isMacOSArm, isWindows } from '../lib/platform-check.js';
 
 const execAsync = promisify(exec);
 
@@ -82,34 +84,55 @@ export async function openCommand(
     const profileDir = join(chvmHome, 'profiles', versionToOpen.version);
     await fs.mkdir(profileDir, { recursive: true });
 
-    // Find executable
-    const appPath = versionToOpen.path;
-    const execPath = join(appPath, 'Contents', 'MacOS', 'Chromium');
-
-    if (!existsSync(execPath)) {
-      throw new Error(`Chromium executable not found at ${execPath}`);
-    }
-
     const args: string[] = [`--user-data-dir=${profileDir}`];
-
     if (options.disableCors) {
       args.push('--disable-web-security');
-      args.push(
-        `--user-data-dir=${join(chvmHome, 'tmp', versionToOpen.version)}`
-      );
     }
 
     console.log(chalk.green(`Opening Chromium ${versionToOpen.version}...`));
 
-    // Use open command on macOS
-    const command = `open -a "${appPath}" --args ${args.join(' ')}`;
-
-    exec(command, error => {
-      if (error) {
-        console.error(chalk.red(`Failed to open: ${error.message}`));
-        process.exit(1);
+    // macOS
+    if (isMacOSArm()) {
+      const execPath = join(
+        versionToOpen.path,
+        'Contents',
+        'MacOS',
+        'Chromium'
+      );
+      if (!existsSync(execPath)) {
+        throw new Error(`Chromium executable not found at ${execPath}`);
       }
-    });
+
+      const command = `open -a "${versionToOpen.path}" --args ${args.join(' ')}`;
+      exec(command, error => {
+        if (error) {
+          console.error(chalk.red(`Failed to open: ${error.message}`));
+          process.exit(1);
+        }
+      });
+      return;
+    }
+
+    // Windows
+    if (isWindows()) {
+      const winAppDir = resolveWindowsAppPath(versionToOpen.path);
+      const exePath = join(winAppDir, 'chrome.exe');
+
+      if (!existsSync(exePath)) {
+        throw new Error(`chrome.exe not found at ${exePath}`);
+      }
+
+      const command = `"${exePath}" ${args.join(' ')}`;
+      exec(command, error => {
+        if (error) {
+          console.error(chalk.red(`Failed to open: ${error.message}`));
+        }
+      });
+
+      return;
+    }
+
+    throw new Error('Unsupported platform');
   } catch (error) {
     console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);

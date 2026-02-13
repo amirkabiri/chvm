@@ -28,6 +28,7 @@ import {
   calculateDirectorySize,
 } from '../lib/installer.js';
 import { withLock } from '../lib/lock.js';
+import { isMacOSArm, isWindows } from '../lib/platform-check.js';
 
 export interface InstallCommandOptions {
   cache?: boolean;
@@ -87,12 +88,24 @@ export async function installCommand(
         const spinner = ora('Fetching revision metadata...').start();
 
         const metadata = await fetchRevisionMetadata(revision);
-        const chromeMacZip = metadata.items.find(item =>
-          item.name.includes('chrome-mac.zip')
+
+        // Determine expected zip name based on platform
+        let expectedZipName = '';
+        if (isWindows()) {
+          // chrome-win.zip for Win_x64
+          expectedZipName = 'chrome-win.zip';
+        } else if (isMacOSArm()) {
+          expectedZipName = 'chrome-mac.zip';
+        } else {
+          throw new Error(`Unsupported platform`);
+        }
+
+        const chromeZip = metadata.items.find(item =>
+          item.name.includes(expectedZipName)
         );
 
-        if (!chromeMacZip) {
-          throw new Error('chrome-mac.zip not found in revision');
+        if (!chromeZip) {
+          throw new Error(`${expectedZipName} not found in revision`);
         }
 
         spinner.text = `Downloading Chromium ${displayVersion}...`;
@@ -100,13 +113,17 @@ export async function installCommand(
         const tmpZip = join(chvmHome, 'tmp', `chrome-${revision}.zip`);
         await fs.mkdir(join(chvmHome, 'tmp'), { recursive: true });
 
-        await downloadWithProgress(chromeMacZip.mediaLink, tmpZip, progress => {
+        await downloadWithProgress(chromeZip.mediaLink, tmpZip, progress => {
           spinner.text = `Downloading: ${progress.percentage}% (${Math.round(progress.downloaded / 1024 / 1024)}MB / ${Math.round(progress.total / 1024 / 1024)}MB)`;
         });
 
         spinner.text = 'Extracting...';
 
-        const finalPath = join(chvmHome, 'installs', `${installKey}.app`);
+        const finalPath = join(
+          chvmHome,
+          'installs',
+          isWindows() ? installKey : `${installKey}.app`
+        );
 
         await atomicInstall(
           async tmpDir => {
@@ -117,28 +134,46 @@ export async function installCommand(
               spinner.text = `Extracting: ${progress.extractedFiles} files...`;
             });
 
-            spinner.text = 'Looking for app bundle...';
+            spinner.text = 'Looking for executable/bundle...';
 
-            // Find the .app bundle
+            // Find the executable or app bundle
             const files = await fs.readdir(extractPath);
             console.log('Extracted files:', files.slice(0, 10).join(', ')); // Debug
 
-            const appBundle = files.find(f => f.endsWith('.app'));
-
-            if (!appBundle) {
-              // Maybe it's in a subdirectory like chrome-mac/
-              const chromeMacDir = join(extractPath, 'chrome-mac');
-              if (existsSync(chromeMacDir)) {
-                const subFiles = await fs.readdir(chromeMacDir);
-                const subAppBundle = subFiles.find(f => f.endsWith('.app'));
-                if (subAppBundle) {
-                  return join(chromeMacDir, subAppBundle);
-                }
+            // Windows
+            if (isWindows()) {
+              const chromeWinDir = files.find(
+                f => f === 'chrome-win' || f.includes('chrome-win')
+              );
+              if (chromeWinDir) {
+                return join(extractPath, chromeWinDir);
               }
-              throw new Error('App bundle not found in extracted files');
+              // Fallback: check if chrome.exe is in root
+              if (files.includes('chrome.exe')) {
+                return extractPath;
+              }
+              throw new Error('chrome.exe or chrome-win folder not found');
+            } else if (isMacOSArm()) {
+              // Mac
+              const appBundle = files.find(f => f.endsWith('.app'));
+
+              if (!appBundle) {
+                // Maybe it's in a subdirectory like chrome-mac/
+                const chromeMacDir = join(extractPath, 'chrome-mac');
+                if (existsSync(chromeMacDir)) {
+                  const subFiles = await fs.readdir(chromeMacDir);
+                  const subAppBundle = subFiles.find(f => f.endsWith('.app'));
+                  if (subAppBundle) {
+                    return join(chromeMacDir, subAppBundle);
+                  }
+                }
+                throw new Error('App bundle not found in extracted files');
+              }
+
+              return join(extractPath, appBundle);
             }
 
-            return join(extractPath, appBundle);
+            throw new Error(`Unsupported platform`);
           },
           finalPath,
           chvmHome

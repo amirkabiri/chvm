@@ -12,10 +12,26 @@ export function getPlatformInfo(): PlatformInfo {
   return {
     platform: process.platform,
     arch: process.arch,
-    isSupported: isMacOSArm(),
+    isSupported: isMacOSArm() || isWindows(),
   };
 }
 
 export function isMacOSArm(): boolean {
   return process.platform === 'darwin' && process.arch === 'arm64';
+}
+
+export function isWindows(): boolean {
+  return process.platform === 'win32' && process.arch === 'x64';
+}
+
+export function getChromiumPlatformPrefix(): string {
+  if (isMacOSArm()) {
+    return 'Mac_Arm';
+  }
+
+  if (isWindows()) {
+    return 'Win_x64';
+  }
+
+  throw new Error(`Unsupported platform: ${process.platform} ${process.arch}`);
 }
