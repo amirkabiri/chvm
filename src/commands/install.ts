@@ -28,7 +28,7 @@ import {
   calculateDirectorySize,
 } from '../lib/installer.js';
 import { withLock } from '../lib/lock.js';
-import { isMacOSArm, isWindows } from '../lib/platform-check.js';
+import { isMacOS, isWindows, isLinux, getChromiumZipName } from '../lib/platform-check.js';
 
 export interface InstallCommandOptions {
   cache?: boolean;
@@ -89,16 +89,7 @@ export async function installCommand(
 
         const metadata = await fetchRevisionMetadata(revision);
 
-        // Determine expected zip name based on platform
-        let expectedZipName = '';
-        if (isWindows()) {
-          // chrome-win.zip for Win_x64
-          expectedZipName = 'chrome-win.zip';
-        } else if (isMacOSArm()) {
-          expectedZipName = 'chrome-mac.zip';
-        } else {
-          throw new Error(`Unsupported platform`);
-        }
+        const expectedZipName = getChromiumZipName();
 
         const chromeZip = metadata.items.find(item =>
           item.name.includes(expectedZipName)
@@ -122,7 +113,7 @@ export async function installCommand(
         const finalPath = join(
           chvmHome,
           'installs',
-          isWindows() ? installKey : `${installKey}.app`
+          isMacOS() ? `${installKey}.app` : installKey
         );
 
         await atomicInstall(
@@ -138,7 +129,6 @@ export async function installCommand(
 
             // Find the executable or app bundle
             const files = await fs.readdir(extractPath);
-            console.log('Extracted files:', files.slice(0, 10).join(', ')); // Debug
 
             // Windows
             if (isWindows()) {
@@ -153,8 +143,22 @@ export async function installCommand(
                 return extractPath;
               }
               throw new Error('chrome.exe or chrome-win folder not found');
-            } else if (isMacOSArm()) {
-              // Mac
+            }
+
+            if (isLinux()) {
+              const chromeLinuxDir = files.find(
+                f => f === 'chrome-linux' || f.includes('chrome-linux')
+              );
+              if (chromeLinuxDir) {
+                return join(extractPath, chromeLinuxDir);
+              }
+              if (files.includes('chrome')) {
+                return extractPath;
+              }
+              throw new Error('chrome binary or chrome-linux folder not found');
+            }
+
+            if (isMacOS()) {
               const appBundle = files.find(f => f.endsWith('.app'));
 
               if (!appBundle) {

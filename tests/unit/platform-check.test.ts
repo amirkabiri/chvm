@@ -1,40 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 
 describe('Unit: platform-check module', () => {
-  describe('checkPlatform', () => {
-    it('should not throw on macOS ARM', async () => {
-      const { checkPlatform } = await import('../../src/lib/platform-check.js');
-
-      // If running on actual macOS ARM, should not throw
-      if (process.platform === 'darwin' && process.arch === 'arm64') {
-        expect(() => checkPlatform()).not.toThrow();
-      }
-    });
-
-    it('should throw on non-macOS platforms', async () => {
-      const { checkPlatform } = await import('../../src/lib/platform-check.js');
-
-      // If not on macOS ARM, should throw
-      if (process.platform !== 'darwin' || process.arch !== 'arm64') {
-        expect(() => checkPlatform()).toThrow(/macOS.*ARM|Apple Silicon/i);
-      }
-    });
-
-    it('should provide helpful error message', async () => {
-      const { checkPlatform } = await import('../../src/lib/platform-check.js');
-
-      if (process.platform !== 'darwin' || process.arch !== 'arm64') {
-        try {
-          checkPlatform();
-          expect(true).toBe(false); // Should not reach here
-        } catch (error) {
-          expect((error as Error).message).toMatch(/macOS/i);
-          expect((error as Error).message).toMatch(/ARM|Apple Silicon/i);
-        }
-      }
-    });
-  });
-
   describe('getPlatformInfo', () => {
     it('should return current platform information', async () => {
       const { getPlatformInfo } = await import(
@@ -52,18 +18,13 @@ describe('Unit: platform-check module', () => {
       expect(typeof info.isSupported).toBe('boolean');
     });
 
-    it('should mark macOS ARM as supported', async () => {
-      const { getPlatformInfo } = await import(
+    it('should mark supported desktop platforms as supported', async () => {
+      const { getPlatformInfo, isSupportedPlatform } = await import(
         '../../src/lib/platform-check.js'
       );
 
       const info = getPlatformInfo();
-
-      if (info.platform === 'darwin' && info.arch === 'arm64') {
-        expect(info.isSupported).toBe(true);
-      } else {
-        expect(info.isSupported).toBe(false);
-      }
+      expect(info.isSupported).toBe(isSupportedPlatform());
     });
   });
 
@@ -76,6 +37,39 @@ describe('Unit: platform-check module', () => {
       const expected =
         process.platform === 'darwin' && process.arch === 'arm64';
       expect(result).toBe(expected);
+    });
+  });
+
+  describe('getChromiumPlatformPrefix', () => {
+    it('should return a prefix for the current platform when supported', async () => {
+      const { getChromiumPlatformPrefix, isSupportedPlatform } = await import(
+        '../../src/lib/platform-check.js'
+      );
+
+      if (!isSupportedPlatform()) {
+        expect(() => getChromiumPlatformPrefix()).toThrow(/Unsupported platform/);
+        return;
+      }
+
+      const prefix = getChromiumPlatformPrefix();
+      expect(typeof prefix).toBe('string');
+      expect(prefix.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('getChromiumZipName', () => {
+    it('should return a zip name for the current platform when supported', async () => {
+      const { getChromiumZipName, isSupportedPlatform } = await import(
+        '../../src/lib/platform-check.js'
+      );
+
+      if (!isSupportedPlatform()) {
+        expect(() => getChromiumZipName()).toThrow(/Unsupported platform/);
+        return;
+      }
+
+      const zipName = getChromiumZipName();
+      expect(zipName).toMatch(/^chrome-(mac|win|linux)\.zip$/);
     });
   });
 });

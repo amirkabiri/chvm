@@ -3,7 +3,7 @@ import AdmZip from 'adm-zip';
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { randomBytes } from 'crypto';
-import { isWindows, isMacOSArm } from './platform-check.js';
+import { isWindows, isMacOS, isLinux } from './platform-check.js';
 
 export interface ExtractProgress {
   extractedFiles: number;
@@ -103,9 +103,11 @@ export async function atomicInstall(
     // Run install function
     let installedPath = await installFn(tmpDir);
 
-    // Normalize install path on Windows
+    // Normalize install path on Windows / Linux
     if (isWindows()) {
       installedPath = resolveWindowsAppPath(installedPath);
+    } else if (isLinux()) {
+      installedPath = resolveLinuxAppPath(installedPath);
     }
 
     // Move to final location atomically
@@ -128,7 +130,7 @@ export async function verifyAppBundle(appPath: string): Promise<boolean> {
   }
 
   // Check for required macOS app structure
-  if (isMacOSArm()) {
+  if (isMacOS()) {
     const contentsDir = join(appPath, 'Contents');
     const macOSDir = join(contentsDir, 'MacOS');
 
@@ -167,6 +169,16 @@ export async function verifyAppBundle(appPath: string): Promise<boolean> {
     if (existsSync(directExe)) return true;
     if (existsSync(headlessExe)) return true;
     if (existsSync(nestedExe)) return true;
+
+    return false;
+  }
+
+  if (isLinux()) {
+    const directBin = join(appPath, 'chrome');
+    const nestedBin = join(appPath, 'chrome-linux', 'chrome');
+
+    if (existsSync(directBin)) return true;
+    if (existsSync(nestedBin)) return true;
 
     return false;
   }
@@ -224,6 +236,16 @@ export function resolveWindowsAppPath(installDir: string): string {
 
   if (existsSync(directExe)) return installDir;
   if (existsSync(nestedExe)) return join(installDir, 'chrome-win');
+
+  return installDir;
+}
+
+export function resolveLinuxAppPath(installDir: string): string {
+  const directBin = join(installDir, 'chrome');
+  const nestedBin = join(installDir, 'chrome-linux', 'chrome');
+
+  if (existsSync(directBin)) return installDir;
+  if (existsSync(nestedBin)) return join(installDir, 'chrome-linux');
 
   return installDir;
 }

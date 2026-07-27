@@ -5,8 +5,8 @@
 import chalk from 'chalk';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
-import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import fs from 'fs/promises';
 import { join } from 'path';
 import { Command } from 'commander';
 import {
@@ -16,8 +16,11 @@ import {
   readInstalledVersions,
 } from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
-import { resolveWindowsAppPath } from '../lib/installer.js';
-import { isMacOSArm, isWindows } from '../lib/platform-check.js';
+import {
+  resolveWindowsAppPath,
+  resolveLinuxAppPath,
+} from '../lib/installer.js';
+import { isMacOS, isWindows, isLinux } from '../lib/platform-check.js';
 
 const execAsync = promisify(exec);
 
@@ -91,8 +94,8 @@ export async function openCommand(
 
     console.log(chalk.green(`Opening Chromium ${versionToOpen.version}...`));
 
-    // macOS
-    if (isMacOSArm()) {
+    // macOS (Apple Silicon and Intel)
+    if (isMacOS()) {
       const execPath = join(
         versionToOpen.path,
         'Contents',
@@ -122,13 +125,30 @@ export async function openCommand(
         throw new Error(`chrome.exe not found at ${exePath}`);
       }
 
-      const command = `"${exePath}" ${args.join(' ')}`;
-      exec(command, error => {
-        if (error) {
-          console.error(chalk.red(`Failed to open: ${error.message}`));
-        }
+      const child = spawn(exePath, args, {
+        detached: true,
+        stdio: 'ignore',
       });
+      child.unref();
+      return;
+    }
 
+    // Linux
+    if (isLinux()) {
+      const linuxAppDir = resolveLinuxAppPath(versionToOpen.path);
+      const binPath = join(linuxAppDir, 'chrome');
+
+      if (!existsSync(binPath)) {
+        throw new Error(`chrome binary not found at ${binPath}`);
+      }
+
+      await fs.chmod(binPath, 0o755).catch(() => {});
+
+      const child = spawn(binPath, args, {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
       return;
     }
 

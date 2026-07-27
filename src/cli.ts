@@ -20,7 +20,7 @@ const program = new Command();
 program
   .name('chvm')
   .description(
-    'Chromium Version Manager - Manage multiple Chromium versions on macOS ARM'
+    'Chromium Version Manager - Manage multiple Chromium versions on macOS, Windows, and Linux'
   )
   .version(packageJson.version);
 

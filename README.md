@@ -1,6 +1,6 @@
 # chvm — Chromium Version Manager
 
-A lightweight CLI tool for managing multiple Chromium versions on MacOS (ARM/Apple Silicon) and Windows.
+A lightweight CLI tool for managing multiple Chromium versions on macOS (Apple Silicon and Intel), Windows (x64 and ARM64), and Linux.
 
 ## ⚠️ Development Status
 
