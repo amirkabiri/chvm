@@ -62,25 +62,25 @@ export async function updateCommand(
 
     const spinner = ora('Fetching available Chromium versions...').start();
 
-    fetch(
-      `https://raw.githubusercontent.com/amirkabiri/chvm/refs/heads/main/public/manifest/${getManifestPlatform()}.json`
-    )
-      .then(res => res.json())
-      .then(data => {
-        const availablePath = join(chvmHome, 'available.json');
-        fs.writeFileSync(availablePath, JSON.stringify(data, null, 2));
-        spinner.succeed(
-          chalk.green(
-            `Updated! ${(data as Version[]).length} versions available.`
-          )
-        );
-      })
-      .catch(error => {
-        spinner.fail(
-          chalk.red(`Failed to update: ${(error as Error).message}`)
-        );
-        throw error;
-      });
+    try {
+      const response = await fetch(
+        `https://raw.githubusercontent.com/amirkabiri/chvm/refs/heads/main/public/manifest/${getManifestPlatform()}.json`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as Version[];
+      const availablePath = join(chvmHome, 'available.json');
+      fs.writeFileSync(availablePath, JSON.stringify(data, null, 2));
+      spinner.succeed(
+        chalk.green(`Updated! ${data.length} versions available.`)
+      );
+    } catch (error) {
+      spinner.fail(chalk.red(`Failed to update: ${(error as Error).message}`));
+      throw error;
+    }
   } catch (error) {
     console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
