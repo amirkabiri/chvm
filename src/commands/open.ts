@@ -3,10 +3,9 @@
  */
 
 import chalk from 'chalk';
-import { exec, spawn } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
+import { exec } from 'child_process';
 import { existsSync } from 'fs';
+import fs from 'fs/promises';
 import { join } from 'path';
 import { Command } from 'commander';
 import {
@@ -18,8 +17,7 @@ import {
 import { resolveVersion } from '../lib/mapping.js';
 import { resolveWindowsAppPath } from '../lib/installer.js';
 import { isMacOSArm, isWindows } from '../lib/platform-check.js';
-
-const execAsync = promisify(exec);
+import { installCommand } from './install.js';
 
 export interface OpenCommandOptions {
   disableCors?: boolean;
@@ -33,7 +31,7 @@ export async function openCommand(
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 
-    const installed = await readInstalledVersions(chvmHome);
+    let installed = await readInstalledVersions(chvmHome);
     const available = await readAvailableVersions(chvmHome);
 
     let versionToOpen: { version: string; path: string } | null = null;
@@ -57,18 +55,17 @@ export async function openCommand(
         console.log(
           chalk.blue(`${resolved.version} not installed. Installing...`)
         );
-        // Use revision for install if no version
-        await execAsync(`node ${process.argv[1]} install ${revision}`);
+        await installCommand(revision, {});
 
         // Reload installed versions
-        const reloaded = await readInstalledVersions(chvmHome);
-        versionToOpen = { version: installKey, ...reloaded[installKey] };
+        installed = await readInstalledVersions(chvmHome);
+        versionToOpen = { version: installKey, ...installed[installKey] };
       } else {
         versionToOpen = { version: installKey, ...installed[installKey] };
       }
     }
 
-    if (!versionToOpen) {
+    if (!versionToOpen || !versionToOpen.path) {
       throw new Error('Failed to prepare version for opening');
     }
 
