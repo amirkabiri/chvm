@@ -10,6 +10,8 @@ import fs from 'fs';
 import { join } from 'path';
 import { Version } from '../manifest/shared/types';
 
+const AVAILABLE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 type ManifestPlatform =
   | 'android'
   | 'android_arm64'
@@ -60,27 +62,50 @@ export async function updateCommand(
     const chvmHome = getChvmHome();
     await ensureChvmDir(chvmHome);
 
-    const spinner = ora('Fetching available Chromium versions...').start();
+    const availablePath = join(chvmHome, 'available.json');
 
-    fetch(
-      `https://raw.githubusercontent.com/amirkabiri/chvm/refs/heads/main/public/manifest/${getManifestPlatform()}.json`
-    )
-      .then(res => res.json())
-      .then(data => {
-        const availablePath = join(chvmHome, 'available.json');
-        fs.writeFileSync(availablePath, JSON.stringify(data, null, 2));
-        spinner.succeed(
+    if (!options.force && fs.existsSync(availablePath)) {
+      const ageMs = Date.now() - fs.statSync(availablePath).mtimeMs;
+      if (ageMs < AVAILABLE_CACHE_TTL_MS) {
+        const cached = JSON.parse(
+          fs.readFileSync(availablePath, 'utf8')
+        ) as Version[];
+        console.log(
           chalk.green(
-            `Updated! ${(data as Version[]).length} versions available.`
+            `Using cached list (${cached.length} versions, updated ${Math.round(ageMs / 60000)}m ago). Use --force to refresh.`
           )
         );
-      })
-      .catch(error => {
-        spinner.fail(
-          chalk.red(`Failed to update: ${(error as Error).message}`)
-        );
-        throw error;
+        return;
+      }
+    }
+
+    const spinner = ora('Fetching available Chromium versions...').start();
+
+    try {
+      const manifestUrl = new URL(
+        `https://raw.githubusercontent.com/amirkabiri/chvm/refs/heads/main/public/manifest/${getManifestPlatform()}.json`
+      );
+      if (options.force) {
+        manifestUrl.searchParams.set('t', String(Date.now()));
+      }
+
+      const response = await fetch(manifestUrl.toString(), {
+        cache: options.force ? 'no-store' : 'default',
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as Version[];
+      fs.writeFileSync(availablePath, JSON.stringify(data, null, 2));
+      spinner.succeed(
+        chalk.green(`Updated! ${data.length} versions available.`)
+      );
+    } catch (error) {
+      spinner.fail(chalk.red(`Failed to update: ${(error as Error).message}`));
+      throw error;
+    }
   } catch (error) {
     console.error(chalk.red(`Error: ${(error as Error).message}`));
     process.exit(1);
