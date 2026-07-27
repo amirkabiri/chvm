@@ -17,6 +17,10 @@ import {
 } from '../lib/storage.js';
 import { resolveVersion } from '../lib/mapping.js';
 import { withLock } from '../lib/lock.js';
+import {
+  findProcessesUsingPath,
+  killProcesses,
+} from '../lib/process.js';
 
 export interface UninstallCommandOptions {
   force?: boolean;
@@ -47,6 +51,24 @@ export async function uninstallCommand(
       }
 
       const versionInfo = installed[versionToUninstall];
+      const running = await findProcessesUsingPath(versionInfo.path);
+
+      if (running.length > 0) {
+        if (!options.force) {
+          const pids = running.map(p => p.pid).join(', ');
+          throw new Error(
+            `Version "${versionToUninstall}" is currently running (PID: ${pids}). Re-run with --force to stop it and uninstall.`
+          );
+        }
+
+        console.log(
+          chalk.yellow(
+            `Stopping ${running.length} running process(es) for ${versionToUninstall}...`
+          )
+        );
+        await killProcesses(running.map(p => p.pid));
+      }
+
       const spinner = ora(`Uninstalling ${versionToUninstall}...`).start();
 
       // Remove app directory
