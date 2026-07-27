@@ -34,14 +34,18 @@ export async function lsCommand(options: LsCommandOptions): Promise<void> {
       }
 
       console.log(chalk.bold('\nAvailable Chromium Versions:\n'));
-      console.log(chalk.gray('VERSION\tCHANNEL\tSTATUS'));
+      console.log(chalk.gray('VERSION\tREVISION\tCHANNEL\tSTATUS'));
       console.log(chalk.gray('─'.repeat(60)));
 
       for (const item of available) {
         const isInstalled = installed[item.version];
         const status = isInstalled ? chalk.green('* installed') : '';
+        const revision =
+          item.chromium_main_branch_position != null
+            ? String(item.chromium_main_branch_position)
+            : '-';
         console.log(
-          `${item.version.split('.')[0]}\t${item.channel}\t${status}`
+          `${item.version}\t${revision}\t${item.channel}\t${status}`
         );
       }
       console.log();
