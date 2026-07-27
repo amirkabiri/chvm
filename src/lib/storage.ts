@@ -44,6 +44,7 @@ export async function ensureChvmDir(chvmHome: string): Promise<void> {
     join(chvmHome, 'installs'),
     join(chvmHome, 'profiles'),
     join(chvmHome, 'tmp'),
+    join(chvmHome, 'cache'),
     join(chvmHome, 'logs'),
   ];
 

@@ -110,12 +110,29 @@ export async function installCommand(
 
         spinner.text = `Downloading Chromium ${displayVersion}...`;
 
+        const useCache = options.cache !== false;
+        const cacheZip = join(chvmHome, 'cache', `chrome-${revision}.zip`);
         const tmpZip = join(chvmHome, 'tmp', `chrome-${revision}.zip`);
         await fs.mkdir(join(chvmHome, 'tmp'), { recursive: true });
+        await fs.mkdir(join(chvmHome, 'cache'), { recursive: true });
 
-        await downloadWithProgress(chromeZip.mediaLink, tmpZip, progress => {
-          spinner.text = `Downloading: ${progress.percentage}% (${Math.round(progress.downloaded / 1024 / 1024)}MB / ${Math.round(progress.total / 1024 / 1024)}MB)`;
-        });
+        if (useCache && existsSync(cacheZip)) {
+          spinner.text = 'Using cached download...';
+          await fs.copyFile(cacheZip, tmpZip);
+        } else {
+          if (!useCache && existsSync(cacheZip)) {
+            await fs.unlink(cacheZip).catch(() => {});
+          }
+
+          await downloadWithProgress(chromeZip.mediaLink, tmpZip, progress => {
+            spinner.text = `Downloading: ${progress.percentage}% (${Math.round(progress.downloaded / 1024 / 1024)}MB / ${Math.round(progress.total / 1024 / 1024)}MB)`;
+          });
+
+          // Keep a copy for future installs unless --no-cache was passed
+          if (useCache) {
+            await fs.copyFile(tmpZip, cacheZip).catch(() => {});
+          }
+        }
 
         spinner.text = 'Extracting...';
 
